@@ -528,16 +528,31 @@ footer nav.right {
 }
 
 .default-img-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 24px 0 0;
+  padding: 0;
   text-align: center;
-  margin-top: 24px;
+  box-sizing: border-box;
+}
+
+.default-img-wrap img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .default-img-wrap figcaption {
+  display: block;
   width: 100%;
   max-width: 520px;
-  box-sizing: border-box;
   margin: 10px auto 0;
   padding: 0 12px;
+  box-sizing: border-box;
 
   color: var(--accent-green);
   font-family: var(--font-sans);
