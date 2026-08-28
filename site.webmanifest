@@ -1,0 +1,18 @@
+{
+  "name": "Viernes Védicos con Nitāy Vedana",
+  "short_name": "Viernes Védicos",
+  "description": "Tras 14 años en India, Nitāy ahora comparte sus experiencias y conocomientos adquiridos en Castellano",
+  "start_url": "./",
+  "scope": "./",
+  "display_override": ["minimal-ui"],
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#151C26",
+  "theme_color": "#151C26",
+  "categories": ["lifestyle", "utilities", "spirituality"],
+  "icons": [
+    { "src": "img/icons/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icons/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
