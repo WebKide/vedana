@@ -534,6 +534,8 @@ footer nav.right {
 
 .default-img-wrap figcaption {
   max-width: 520px;
+  min-width: 220px;
+  width: auto;
   margin: 10px auto 0;
   color: var(--accent-green);
   font-family: var(--font-sans);
