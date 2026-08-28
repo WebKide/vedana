@@ -533,7 +533,16 @@ footer nav.right {
   max-width: 100%;
   margin: 24px 0 0;
   padding: 0;
+  box-sizing: border-box;
   text-align: center;
+}
+
+.default-img-wrap figure {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
