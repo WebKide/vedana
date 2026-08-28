@@ -625,7 +625,6 @@ footer nav.right {
   color: var(--white);
   line-height: 1.5;
   font-size: 1.3em;
-  font-style: italic;
   text-align: justify;
   padding: 16px 25px;
   margin: 1em 20px;
@@ -644,6 +643,12 @@ footer nav.right {
   text-transform: uppercase;
   color: var(--accent-green);
   text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent);
+}
+
+#content blockquote i,
+#content blockquote em {
+  font-style: italic;
+  color: var(--white);
 }
 
 #content h1, #content h2,
