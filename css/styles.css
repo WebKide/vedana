@@ -533,18 +533,18 @@ footer nav.right {
 }
 
 .default-img-wrap figcaption {
+  width: 100%;
   max-width: 520px;
-  min-width: 220px;
-  width: auto;
+  box-sizing: border-box;
   margin: 10px auto 0;
+  padding: 0 12px;
+
   color: var(--accent-green);
   font-family: var(--font-sans);
   font-size: 0.9rem;
   font-style: normal;
   text-align: center;
-  padding: 0 12px;
 }
-
 
 /* ==========================================================================
    PRESENTATION CONTENT (font-size buttons scale #content only)
