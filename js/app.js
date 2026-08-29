@@ -16,7 +16,7 @@
   // Small helpers
   // ---------------------------------------------------------------
 
-  var STORAGE_PREFIX = 'presentations:';
+  var STORAGE_PREFIX = 'Presentaciones:';
 
   function dbGet(key, fallback) {
     try {
@@ -82,7 +82,7 @@
   var fontIncBtn   = document.getElementById('fontIncBtn');
 
   var WELCOME_HTML = contentEl ? contentEl.innerHTML : '';
-  var DEFAULT_TITLE = navTitleEl ? navTitleEl.textContent : 'Presentations';
+  var DEFAULT_TITLE = navTitleEl ? navTitleEl.textContent : 'Presentaciones';
 
   // ---------------------------------------------------------------
   // Font-size control — scales #content only, persisted locally
@@ -132,7 +132,7 @@
   // ---------------------------------------------------------------
 
   var menuCloseTimer = null;
-  var MENU_CLOSE_DELAY = 2000; // 2 seconds
+  var MENU_CLOSE_DELAY = 2300; // 2.3 seconds
 
 
   function openMenu() {
@@ -288,11 +288,15 @@
     var chevron = document.createElement('span');
     chevron.className = 'accordion-chevron';
     chevron.setAttribute('aria-hidden', 'true');
+
     chevron.innerHTML =
       '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" ' +
       'aria-hidden="true" focusable="false">' +
-      '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" ' +
-      'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>' +
+        '<path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>';
+
     return chevron;
   }
 
@@ -300,6 +304,7 @@
     if (!root) return;
 
     var headings = Array.prototype.filter.call(root.children, isHeading);
+    var isFirstToggle = true; // only the first *real* section starts open
 
     headings.forEach(function (heading) {
 
@@ -321,12 +326,14 @@
       heading.setAttribute('role', 'button');
       heading.setAttribute('tabindex', '0');
 
-      // True: headings expanded, False: headings collapsed
-      heading.setAttribute('aria-expanded', 'false');
+      var startExpanded = isFirstToggle;
+      isFirstToggle = false;
+
+      heading.setAttribute('aria-expanded', startExpanded ? 'true' : 'false');
       heading.appendChild(makeChevron());
 
       var body = document.createElement('div');
-      body.className = 'accordion-body is-collapsed';
+      body.className = 'accordion-body' + (startExpanded ? '' : ' is-collapsed');
       body.appendChild(inner);
 
       heading.insertAdjacentElement('afterend', body);
@@ -343,12 +350,49 @@
     body.classList.toggle('is-collapsed', expanded);
   }
 
+  function toggleAllAccordions(root) {
+    if (!root) return;
+
+    var headings = Array.prototype.filter.call(root.children, isHeading)
+      .filter(function (h) { return h.classList.contains('accordion-toggle'); });
+
+    if (!headings.length) return;
+
+    // If any section is currently collapsed, expand everything;
+    // otherwise collapse everything.
+    var anyCollapsed = headings.some(function (h) {
+      return h.getAttribute('aria-expanded') === 'false';
+    });
+
+    headings.forEach(function (heading) {
+      var body = heading.nextElementSibling;
+      if (!body || !body.classList.contains('accordion-body')) return;
+      heading.setAttribute('aria-expanded', anyCollapsed ? 'true' : 'false');
+      body.classList.toggle('is-collapsed', !anyCollapsed);
+    });
+  }
+
+  var accordionClickTimer = null;
+  var ACCORDION_CLICK_DELAY = 250; // ms — long enough to catch a dblclick
+
   if (contentEl) {
 
     contentEl.addEventListener('click', function (e) {
       var heading = e.target.closest('.accordion-toggle');
       if (!heading) return;
-      toggleAccordionSection(heading);
+
+      // Delay the single-tap toggle so a fast second tap (dblclick)
+      // can cancel it and run "toggle all" instead.
+      clearTimeout(accordionClickTimer);
+      accordionClickTimer = setTimeout(function () {
+        toggleAccordionSection(heading);
+      }, ACCORDION_CLICK_DELAY);
+    });
+
+    contentEl.addEventListener('dblclick', function (e) {
+      clearTimeout(accordionClickTimer);
+      e.preventDefault();
+      toggleAllAccordions(contentEl);
     });
 
     contentEl.addEventListener('keydown', function (e) {
@@ -366,6 +410,7 @@
 
   function loadTemplate(slug, title) {
     if (!contentEl) return;
+    stopSlideshow();
 
     fetch('templates/' + slug + '.html')
       .then(function (r) {
@@ -383,7 +428,7 @@
       .catch(function (err) {
         console.error('[app] loadTemplate failed:', err);
         var msg = isFileProtocol()
-          ? 'This site needs to run from a local web server, not be opened directly as a file. Run <code>python -m http.server</code> in this folder, then open <br/><code>http://localhost:8000/</code>.'
+          ? 'Este sitio debe ejecutarse desde un servidor web local, no abrirse directamente como un archivo. Ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre <br/><b><code>http://localhost:8000/</code></b>.'
           : 'Lo sentimos mucho, pero esa presentación no se pudo abrir correctamente.';
         contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
         if (navTitleEl) navTitleEl.textContent = title || slug;
@@ -399,9 +444,121 @@
     if (backBtn) backBtn.style.display = 'none';
     window.scrollTo(0, 0);
     bindWelcomeSearch();
+    initSlideshow();
   }
 
   if (backBtn) backBtn.addEventListener('click', goHome);
+
+  // ---------------------------------------------------------------
+  // Welcome-view slideshow
+  //
+  // Cycles #welcomeDefaultImg through a hardcoded list of images.
+  // Each slide's caption comes from its `alt`: text before the first
+  // "|" is the title, text after is the body; with no "|" the whole
+  // alt is shown as the title only.
+  // ---------------------------------------------------------------
+
+  var SLIDES = [
+    {
+      src: 'img/rk_bhojan-lila-on-yamuna.jpg',
+      alt: 'Śrī Śrī Rādhā Kṛṣṇa | Śrīmatī Rādhārāṇī da de comer a Kṛṣṇa.'
+    },
+    {
+      src: 'img/rk_nikunj-rasa.jpg',
+      alt: 'Nikuñja Rāsa | Las sakhīs adoran Śrī Śrī Rādhā Kṛṣṇa.'
+    },
+    {
+      src: 'img/rk_vina.jpg',
+      alt: 'Śrī Śrī Rādhā Kṛṣṇa | tocando la vina (instrumento de cuerdas).'
+    }
+    // Optional per-slide `position` (e.g. 'top center') controls both
+    // object-position and the Ken Burns zoom origin; defaults to 'center'.
+  ];
+
+  var SLIDE_DURATION_MS = 9200; // how long each slide stays on screen
+  var slideTimer = null;
+
+  // Parses "Título | Texto" into {heading, body}; with no "|" the whole
+  // string becomes a title-only caption.
+  function parseSlideCaption(alt) {
+    var raw = (alt || '').trim();
+    if (!raw) return null;
+
+    var pipeIdx = raw.indexOf('|');
+    if (pipeIdx === -1) return { heading: raw, body: '' };
+
+    var heading = raw.slice(0, pipeIdx).trim();
+    var body = raw.slice(pipeIdx + 1).trim();
+    if (!heading && !body) return null;
+    return { heading: heading, body: body };
+  }
+
+  function initSlideshow() {
+    var wrapper = document.querySelector('#welcomeDefaultImg .ken-burns-frame');
+    var layerA = wrapper && wrapper.querySelector('.slide-a');
+    var layerB = wrapper && wrapper.querySelector('.slide-b');
+
+    if (!wrapper || !layerA || !layerB || !SLIDES.length) return;
+
+    stopSlideshow();
+
+    var i = 0;
+    var front = layerA;
+    var back = layerB;
+
+    function setSlide(layer, item) {
+      var img = layer.querySelector('.slideshow');
+      var captionEl = layer.querySelector('.slide-caption');
+      var headingEl = layer.querySelector('.slide-caption-heading');
+      var bodyEl = layer.querySelector('.slide-caption-body');
+
+      img.src = item.src;
+      img.alt = item.alt || '';
+      img.style.objectPosition = item.position || 'center';
+      img.style.setProperty('--kb-origin', item.position || 'center');
+
+      // Restart the Ken Burns animation cleanly on this layer.
+      img.style.animation = 'none';
+      void img.offsetWidth; // force reflow
+      img.style.animation = '';
+
+      var parsed = parseSlideCaption(item.alt);
+      if (parsed) {
+        headingEl.textContent = parsed.heading;
+        bodyEl.textContent = parsed.body;
+        captionEl.classList.remove('slide-caption-empty');
+      } else {
+        headingEl.textContent = '';
+        bodyEl.textContent = '';
+        captionEl.classList.add('slide-caption-empty');
+      }
+    }
+
+    function preloadNext(idx) {
+      var pre = new Image();
+      pre.src = SLIDES[(idx + 1) % SLIDES.length].src;
+    }
+
+    setSlide(front, SLIDES[i]);
+    front.classList.add('slide-visible');
+    preloadNext(i);
+
+    if (SLIDES.length < 2) return; // nothing to cycle to
+
+    slideTimer = setInterval(function () {
+      i = (i + 1) % SLIDES.length;
+      setSlide(back, SLIDES[i]);
+      back.classList.add('slide-visible');
+      front.classList.remove('slide-visible');
+      var tmp = front; front = back; back = tmp;
+      preloadNext(i);
+    }, SLIDE_DURATION_MS);
+  }
+
+  function stopSlideshow() {
+    clearInterval(slideTimer);
+    slideTimer = null;
+  }
 
   // ---------------------------------------------------------------
   // Search (Fuse-powered, live results from the 3rd character)
@@ -417,7 +574,7 @@
       searchData = (data && data.entries) || [];
 
       if (typeof Fuse === 'undefined') {
-        console.error('[app] Fuse is not loaded — search-index.json fetched but search is disabled.');
+        console.error('[app] El fuse.min.js no cargó: se ha obtenido el archivo search-index.json, pero la búsqueda está desactivada.');
         return;
       }
 
@@ -436,10 +593,10 @@
 
     })
     .catch(function (err) {
-      console.error('[app] Failed to load search-index.json:', err);
+      console.error('[app] No se pudo cargar el search-index.json:', err);
       var resultsEl = document.getElementById('searchResults');
       if (resultsEl && isFileProtocol()) {
-        resultsEl.innerHTML = '<p class="search-empty">Search needs a local web server — run <code>python -m http.server</code> in this folder, then open http://localhost:8000/.</p>';
+        resultsEl.innerHTML = '<p class="search-empty">Search necesita un servidor web local: ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre: http://localhost:8000/.</p>';
       }
     });
 
@@ -538,7 +695,7 @@
     if (!resultsEl) return;
 
     if (results.length === 0) {
-      resultsEl.innerHTML = '<p class="search-empty">No matches found.</p>';
+      resultsEl.innerHTML = '<p class="search-empty">No se encontraron resultados.</p>';
       return;
     }
 
@@ -571,7 +728,7 @@
     if (defaultImg) defaultImg.style.display = 'none';
 
     if (!fuse) {
-      resultsEl.innerHTML = '<p class="search-empty">Loading search index…</p>';
+      resultsEl.innerHTML = '<p class="search-empty">Cargando el índice de búsqueda...</p>';
       return;
     }
 
@@ -620,4 +777,5 @@
   }
 
   bindWelcomeSearch();
+  initSlideshow();
 })();
