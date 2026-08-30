@@ -251,6 +251,7 @@
 
       e.preventDefault();
 
+      openedFromSearch = false;
       loadTemplate(
         link.getAttribute('data-slug'),
         link.textContent.trim()
@@ -402,6 +403,25 @@
       e.preventDefault();
       toggleAccordionSection(heading);
     });
+
+    // OPEN button inside a search-result group. Bound once here (rather
+    // than re-bound in bindWelcomeSearch) since #content's innerHTML gets
+    // replaced wholesale on every nav, but the #content node itself never
+    // does.
+    contentEl.addEventListener('click', function (e) {
+      var openBtn = e.target.closest('.search-group-open-btn');
+      if (!openBtn) return;
+      e.preventDefault();
+
+      var slug = openBtn.getAttribute('data-slug');
+      var entry = null;
+      for (var i = 0; i < searchData.length; i++) {
+        if (searchData[i].slug === slug) { entry = searchData[i]; break; }
+      }
+
+      openedFromSearch = true;
+      loadTemplate(slug, entry ? entry.title : slug);
+    });
   }
 
   // ---------------------------------------------------------------
@@ -411,6 +431,8 @@
   function loadTemplate(slug, title) {
     if (!contentEl) return;
     stopSlideshow();
+    teardownResultsObserver();
+    document.documentElement.classList.add('is-template-view');
 
     fetch('templates/' + slug + '.html')
       .then(function (r) {
@@ -424,6 +446,7 @@
         window.scrollTo(0, 0);
         if (navTitleEl) navTitleEl.textContent = title || slug;
         if (backBtn) backBtn.style.display = '';
+        initFooterMarquee();
       })
       .catch(function (err) {
         console.error('[app] loadTemplate failed:', err);
@@ -438,6 +461,9 @@
 
   function goHome() {
     if (!contentEl) return;
+    teardownResultsObserver();
+    openedFromSearch = false;
+    stopFooterMarquee();
     contentEl.innerHTML = WELCOME_HTML;
     initAccordions(contentEl);
     if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
@@ -445,9 +471,56 @@
     window.scrollTo(0, 0);
     bindWelcomeSearch();
     initSlideshow();
+    document.documentElement.classList.remove('is-template-view');
   }
 
-  if (backBtn) backBtn.addEventListener('click', goHome);
+  if (backBtn) {
+    backBtn.addEventListener('click', function () {
+      if (openedFromSearch) {
+        backToSearchResults();
+      } else {
+        goHome();
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Footer marquee (template-view ticker)
+  //
+  // .footer-template-text / .footer-home-text visibility is CSS-only,
+  // driven entirely by html.is-template-view — this only measures
+  // whether the single (first) copy of the ticker text overflows its
+  // container, and if so turns on the seamless duplicate-span loop.
+  // Re-run every time a template loads, since title length varies.
+  // ---------------------------------------------------------------
+
+  function initFooterMarquee() {
+    var container = document.querySelector('.footer-template-text');
+    var track = document.querySelector('.footer-marquee-track');
+    var firstSpan = track && track.querySelector('span');
+
+    if (!container || !track || !firstSpan) return;
+
+    track.classList.remove('marquee');
+    track.style.removeProperty('--marquee-duration');
+
+    requestAnimationFrame(function () {
+      var overflow = firstSpan.scrollWidth - container.clientWidth;
+
+      if (overflow > 0) {
+        var duration = Math.max(15, Math.min(60, firstSpan.scrollWidth / 40));
+        track.style.setProperty('--marquee-duration', duration + 's');
+        track.classList.add('marquee');
+      }
+    });
+  }
+
+  function stopFooterMarquee() {
+    var track = document.querySelector('.footer-marquee-track');
+    if (!track) return;
+    track.classList.remove('marquee');
+    track.style.removeProperty('--marquee-duration');
+  }
 
   // ---------------------------------------------------------------
   // Welcome-view slideshow
@@ -459,6 +532,10 @@
   // ---------------------------------------------------------------
 
   var SLIDES = [
+    {
+      src: 'img/rk_purva-raga.jpg',
+      alt: 'Pūrva-raga | Śrīmatī Rādhikā se arregla para encontrarse con Kṛṣṇa.'
+    },
     {
       src: 'img/rk_bhojan-lila-on-yamuna.jpg',
       alt: 'Śrī Śrī Rādhā Kṛṣṇa | Śrīmatī Rādhārāṇī da de comer a Kṛṣṇa.'
@@ -501,6 +578,14 @@
     if (!wrapper || !layerA || !layerB || !SLIDES.length) return;
 
     stopSlideshow();
+
+    // Block the native right-click / long-press context menu (its "open
+    // image in new tab" is the thing that breaks the app-like feel).
+    // Doesn't stop someone from downloading the image some other way —
+    // just removes that one easy exit out of the page.
+    wrapper.addEventListener('contextmenu', function (e) {
+      e.preventDefault();
+    });
 
     var i = 0;
     var front = layerA;
@@ -565,8 +650,18 @@
   // ---------------------------------------------------------------
 
   var MIN_QUERY_LENGTH = 3;
-  var fuse = null;
+  var BATCH_SIZE = 10;
+  var MAX_BULLETS = 7;
+
+  var fuseTitle = null;   // Tier 1: fuzzy match on title_norm only
+  var fuseContent = null; // Tier 3: fuzzy match on search (body) only
   var searchData = [];
+
+  var currentResults = [];  // full ranked group list for the active query
+  var renderedCount = 0;    // how many groups have been appended so far
+  var lastQuery = '';       // raw (un-normalized) text of the last run search
+  var openedFromSearch = false; // true if the open template came from a search result
+  var resultsObserver = null;   // IntersectionObserver driving lazy-load
 
   fetch('templates/search-index.json')
     .then(function (r) { return r.json(); })
@@ -578,17 +673,27 @@
         return;
       }
 
-      fuse = new Fuse(searchData, {
-        includeScore: true,
-        includeMatches: true,
+      var fuseSharedOptions = {
         ignoreLocation: true,
         distance: 3600,
         threshold: 0.3,
-        minMatchCharLength: 3,
-        keys: [
-          { name: 'search', weight: 0.6 },
-          { name: 'title_norm', weight: 0.4 }
-        ]
+        minMatchCharLength: 3
+      };
+
+      fuseTitle = new Fuse(searchData, {
+        ignoreLocation: fuseSharedOptions.ignoreLocation,
+        distance: fuseSharedOptions.distance,
+        threshold: fuseSharedOptions.threshold,
+        minMatchCharLength: fuseSharedOptions.minMatchCharLength,
+        keys: ['title_norm']
+      });
+
+      fuseContent = new Fuse(searchData, {
+        ignoreLocation: fuseSharedOptions.ignoreLocation,
+        distance: fuseSharedOptions.distance,
+        threshold: fuseSharedOptions.threshold,
+        minMatchCharLength: fuseSharedOptions.minMatchCharLength,
+        keys: ['search']
       });
 
     })
@@ -600,48 +705,10 @@
       }
     });
 
-  function buildSearchSnippet(result) {
-    var entry = result.item || result;
-    var matches = result.matches || [];
-
-    // Prefer matches in the main searchable content.
-    // Fall back to title_norm if necessary.
-    var match = null;
-
-    for (var i = 0; i < matches.length; i++) {
-      if (matches[i].key === 'search') {
-        match = matches[i];
-        break;
-      }
-    }
-
-    if (!match && matches.length) {
-      match = matches[0];
-    }
-
-    var text = entry.search || entry.title || '';
-
-    if (!text) return '';
-
-    // No usable match information — show the beginning of the text.
-    if (!match || !match.indices || !match.indices.length) {
-      var fallbackWords = text.trim().split(/\s+/).slice(0, 7);
-
-      return escapeHtml(fallbackWords.join(' ')) +
-        (text.trim().split(/\s+/).length > 7 ? '…' : '');
-    }
-
-    /*
-     * Fuse gives character ranges as:
-     *
-     *   [[start, end], [start, end]]
-     *
-     * We use the first matching range.
-     */
-    var start = match.indices[0][0];
-    var end = match.indices[0][1];
-
-    // Find the beginning of the 3rd word before the match.
+  // Builds a "…3 words <b>match</b> 3 words…" snippet around an arbitrary
+  // [start, end) character range in `text` (end is exclusive). Generalized
+  // from the old fuse-match-only version so any literal occurrence can use it.
+  function snippetAroundMatch(text, start, end) {
     var before = text.slice(0, start);
     var beforeWords = before.trim().split(/\s+/);
 
@@ -652,8 +719,7 @@
       snippetStart = before.lastIndexOf(wordsToKeep);
     }
 
-    // Find the end of the 3rd word after the match.
-    var after = text.slice(end + 1);
+    var after = text.slice(end);
     var afterWords = after.trim().split(/\s+/);
 
     var snippetEnd = text.length;
@@ -663,22 +729,20 @@
       var afterStart = after.indexOf(wordsToKeepAfter);
 
       if (afterStart !== -1) {
-        snippetEnd = end + 1 + afterStart + wordsToKeepAfter.length;
+        snippetEnd = end + afterStart + wordsToKeepAfter.length;
       }
     }
 
     var snippet = text.slice(snippetStart, snippetEnd);
 
-    // Recalculate the match position relative to the snippet.
     var relativeStart = start - snippetStart;
-    var relativeEnd = end - snippetStart + 1;
+    var relativeEnd = end - snippetStart;
 
     var highlighted =
       escapeHtml(snippet.slice(0, relativeStart)) +
       '<b>' + escapeHtml(snippet.slice(relativeStart, relativeEnd)) + '</b>' +
       escapeHtml(snippet.slice(relativeEnd));
 
-    // Add ellipsis if we're not showing the beginning/end of the text.
     if (snippetStart > 0) {
       highlighted = '…' + highlighted;
     }
@@ -690,51 +754,280 @@
     return highlighted;
   }
 
-  function renderSearchResults(results) {
+  // Repeated indexOf — every literal, non-overlapping occurrence of
+  // `needle` in `haystack`, capped at `maxCount`.
+  function findLiteralOccurrences(haystack, needle, maxCount) {
+    var occurrences = [];
+    if (!needle) return occurrences;
+
+    var idx = haystack.indexOf(needle);
+    while (idx !== -1 && occurrences.length < maxCount) {
+      occurrences.push({ start: idx, end: idx + needle.length });
+      idx = haystack.indexOf(needle, idx + needle.length);
+    }
+    return occurrences;
+  }
+
+  // Total count of literal occurrences (uncapped) — used only to rank
+  // tier-2 (exact content match) results by relevance.
+  function countOccurrences(haystack, needle) {
+    if (!needle) return 0;
+    var count = 0;
+    var idx = haystack.indexOf(needle);
+    while (idx !== -1) {
+      count++;
+      idx = haystack.indexOf(needle, idx + needle.length);
+    }
+    return count;
+  }
+
+  // Up to MAX_BULLETS highlighted snippets, one per literal occurrence of
+  // the normalized query inside entry.search.
+  function buildBulletpoints(entry, normalizedQuery) {
+    var text = entry.search || '';
+    var occurrences = findLiteralOccurrences(text, normalizedQuery, MAX_BULLETS);
+
+    return occurrences.map(function (occ) {
+      return snippetAroundMatch(text, occ.start, occ.end);
+    });
+  }
+
+  // ---- Three-tier fallback: title-fuzzy -> content-exact -> content-fuzzy ----
+
+  function buildGroups(rawQuery, normalizedQuery) {
+    var groups;
+
+    // Tier 1 — title, fuzzy.
+    if (fuseTitle) {
+      var titleHits = fuseTitle.search(normalizedQuery);
+      if (titleHits.length) {
+        groups = titleHits.map(function (hit) {
+          var entry = hit.item;
+          var bullets = buildBulletpoints(entry, normalizedQuery);
+          return {
+            entry: entry,
+            bulletpoints: bullets,
+            note: bullets.length === 0
+              ? 'Only the title of this document matches your query "' + rawQuery + '"'
+              : null
+          };
+        });
+        return groups;
+      }
+    }
+
+    // Tier 2 — content, exact substring match across every document.
+    var exactHits = [];
+    for (var i = 0; i < searchData.length; i++) {
+      var entry = searchData[i];
+      var text = entry.search || '';
+      var count = countOccurrences(text, normalizedQuery);
+      if (count > 0) exactHits.push({ entry: entry, count: count });
+    }
+
+    if (exactHits.length) {
+      exactHits.sort(function (a, b) { return b.count - a.count; });
+      groups = exactHits.map(function (hit) {
+        return {
+          entry: hit.entry,
+          bulletpoints: buildBulletpoints(hit.entry, normalizedQuery),
+          note: null
+        };
+      });
+      return groups;
+    }
+
+    // Tier 3 — content, fuzzy (low-confidence fallback). By construction
+    // every result here has zero literal occurrences (tier 2 found none),
+    // so bulletpoints will always come back empty — the note is what
+    // explains why the document is showing up at all.
+    if (!fuseContent) return [];
+
+    var fuzzyHits = fuseContent.search(normalizedQuery);
+    groups = fuzzyHits.map(function (hit) {
+      var entry = hit.item;
+      return {
+        entry: entry,
+        bulletpoints: buildBulletpoints(entry, normalizedQuery),
+        note: 'Este documento podría contener lo que buscas'
+      };
+    });
+    return groups;
+  }
+
+  function buildGroupEl(group, shadeClass) {
+    var entry = group.entry;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'search-group ' + shadeClass;
+
+    var top = document.createElement('div');
+    top.className = 'search-group-top';
+
+    var title = document.createElement('h6');
+    title.className = 'search-group-title';
+    title.textContent = entry.title;
+
+    var openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    openBtn.className = 'search-group-open-btn';
+    openBtn.setAttribute('data-slug', entry.slug);
+    openBtn.innerHTML =
+      ' ABRIR <span class="open-chevron" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none">' +
+          '<path d="M8 5l7 7-7 7" ' +
+            'stroke="currentColor" ' +
+            'stroke-width="2.5" ' +
+            'stroke-linecap="round" ' +
+            'stroke-linejoin="round"/>' +
+        '</svg>' +
+      '</span>';
+
+    top.appendChild(title);
+    top.appendChild(openBtn);
+    wrap.appendChild(top);
+
+    if (group.bulletpoints.length) {
+      var list = document.createElement('ul');
+      list.className = 'search-group-bullets';
+      group.bulletpoints.forEach(function (html) {
+        var li = document.createElement('li');
+        li.innerHTML = html;
+        list.appendChild(li);
+      });
+      wrap.appendChild(list);
+    }
+
+    if (group.note) {
+      var note = document.createElement('p');
+      note.className = 'search-group-note';
+      note.textContent = group.note;
+      wrap.appendChild(note);
+    }
+
+    return wrap;
+  }
+
+  // ---- Lazy/batched rendering ----
+
+  function renderNextBatch() {
     var resultsEl = document.getElementById('searchResults');
     if (!resultsEl) return;
 
-    if (results.length === 0) {
-      resultsEl.innerHTML = '<p class="search-empty">No se encontraron resultados.</p>';
-      return;
+    var next = currentResults.slice(renderedCount, renderedCount + BATCH_SIZE);
+    if (!next.length) return;
+
+    var frag = document.createDocumentFragment();
+
+    next.forEach(function (group, i) {
+      var shadeClass = (renderedCount + i) % 2 === 0 ? 'shade-a' : 'shade-b';
+      frag.appendChild(buildGroupEl(group, shadeClass));
+    });
+
+    resultsEl.appendChild(frag);
+    renderedCount += next.length;
+  }
+
+  function teardownResultsObserver() {
+    if (resultsObserver) {
+      resultsObserver.disconnect();
+      resultsObserver = null;
     }
+    var oldSentinel = document.getElementById('searchSentinel');
+    if (oldSentinel && oldSentinel.parentNode) {
+      oldSentinel.parentNode.removeChild(oldSentinel);
+    }
+  }
 
-    resultsEl.innerHTML = results.map(function (result) {
-      var entry = result.item || result;
-      var snippet = buildSearchSnippet(result);
+  function setupResultsObserver() {
+    var resultsEl = document.getElementById('searchResults');
+    if (!resultsEl || typeof IntersectionObserver === 'undefined') return;
 
-      return (
-        '<a href="#" class="search-result" data-slug="' + escapeHtml(entry.slug) + '">' +
-          '<span class="search-result-title">' + escapeHtml(entry.title) + '</span>' +
-          '<span class="search-result-snippet">' + snippet + '</span>' +
-        '</a>'
-      );
-    }).join('');
+    var sentinel = document.createElement('div');
+    sentinel.id = 'searchSentinel';
+    sentinel.className = 'search-sentinel';
+    sentinel.setAttribute('aria-hidden', 'true');
+    resultsEl.appendChild(sentinel);
+
+    resultsObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        if (renderedCount >= currentResults.length) {
+          teardownResultsObserver();
+          return;
+        }
+        renderNextBatch();
+        resultsEl.appendChild(sentinel); // keep sentinel below the new batch
+        if (renderedCount >= currentResults.length) {
+          teardownResultsObserver();
+        }
+      });
+    }, { root: null, rootMargin: '600px 0px' });
+
+    resultsObserver.observe(sentinel);
   }
 
   function runSearch(query) {
     var resultsEl = document.getElementById('searchResults');
     var defaultImg = document.getElementById('welcomeDefaultImg');
-    var q = normalizeQuery(query);
 
     if (!resultsEl) return;
 
+    lastQuery = query;
+
+    var q = normalizeQuery(query);
+
+    teardownResultsObserver();
+    resultsEl.innerHTML = '';
+    currentResults = [];
+    renderedCount = 0;
+
     if (q.length < MIN_QUERY_LENGTH) {
-      resultsEl.innerHTML = '';
       if (defaultImg) defaultImg.style.display = '';
       return;
     }
 
     if (defaultImg) defaultImg.style.display = 'none';
 
-    if (!fuse) {
+    if (!fuseTitle || !fuseContent) {
       resultsEl.innerHTML = '<p class="search-empty">Cargando el índice de búsqueda...</p>';
       return;
     }
 
-    var matches = fuse.search(q).slice(0, 20);
+    currentResults = buildGroups(query, q);
 
-    renderSearchResults(matches);
+    if (!currentResults.length) {
+      resultsEl.innerHTML = '<p class="search-empty">No se encontraron resultados.</p>';
+      return;
+    }
+
+    renderNextBatch();
+    setupResultsObserver();
+  }
+
+  // Restores the welcome view and re-runs the last query, instead of going
+  // fully home — used when the back button is pressed after opening a
+  // template from a search result.
+  function backToSearchResults() {
+    if (!contentEl) return;
+
+    stopFooterMarquee();
+    contentEl.innerHTML = WELCOME_HTML;
+    initAccordions(contentEl);
+    if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
+    if (backBtn) backBtn.style.display = 'none';
+    window.scrollTo(0, 0);
+    bindWelcomeSearch();
+    initSlideshow();
+    document.documentElement.classList.remove('is-template-view');
+
+    var input = document.getElementById('searchInput');
+    var clearBtn = document.getElementById('searchClearBtn');
+    if (input) input.value = lastQuery;
+    if (clearBtn) clearBtn.style.display = lastQuery.length ? '' : 'none';
+
+    openedFromSearch = false;
+    runSearch(lastQuery);
   }
 
   var debouncedSearch = debounce(function (val) { runSearch(val); }, 150);
@@ -742,7 +1035,6 @@
   function bindWelcomeSearch() {
     var input = document.getElementById('searchInput');
     var clearBtn = document.getElementById('searchClearBtn');
-    var resultsEl = document.getElementById('searchResults');
 
     if (!input) return;
 
@@ -758,20 +1050,6 @@
         clearBtn.style.display = 'none';
         runSearch('');
         input.focus();
-      });
-    }
-
-    if (resultsEl) {
-      resultsEl.addEventListener('click', function (e) {
-        var link = e.target.closest('a[data-slug]');
-        if (!link) return;
-        e.preventDefault();
-        var slug = link.getAttribute('data-slug');
-        var entry = null;
-        for (var i = 0; i < searchData.length; i++) {
-          if (searchData[i].slug === slug) { entry = searchData[i]; break; }
-        }
-        loadTemplate(slug, entry ? entry.title : slug);
       });
     }
   }

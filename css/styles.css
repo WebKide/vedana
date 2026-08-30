@@ -77,19 +77,20 @@
 :root {
   /* Base */
   --bg:       #151C26; /* Gunmetal Blue */
+  --noir:     #201D30;
   --text:     #E0E0E0; /* Light Gray */
   --white:    #FFFFFF; /* White */
   --muted:    #C5A5C5; /* Dusty Lavender */
 
   /* Primary colors */
-  --green:        #4CAF50; /* Green */
   --accent:       #FB6D21; /* Vivid Orange */
-  --accent-green: #00AA6D; /* Jade Green */
-  --neon-cyan:    #509FFF; /* Neon Cyan */
+  --accent-green: #00AA6D; /* Jade Green  #4FCB8A; */
+  --neon-cyan:    #2BC4E8; /* Neon Cyan #509FFF */
+  --cyan:         #5CE1E6; /* rgba(92, 225, 230, 0.20); */
 
   --violet:     #A78BFA; /* Electric Violet */
   --peach:      #e7953e; /* Neon Peach */
-  --lime:       #B6FF00; /* Electric Lime */
+  --lime:       #9ADB1E; /* Electric Lime */
 
   /* Panels */
   --panel:   #250D3B; /* Dark Purple */
@@ -98,6 +99,8 @@
   /* Shadows */
   --overlay-dark: rgba(0, 0, 0, 0.20); /* Black 20% */
   --shadow-dark:  rgba(0, 0, 0, 0.40); /* Black 40% */
+  --shade-10:     rgba(0, 0, 0, 0.45); /* Black 10% — search group shade A */
+  --shade-30:     rgba(0, 0, 0, 0.95); /* Black 30% — search group shade B */
 
   /* Orange */
   --accent-bg:     rgba(251, 109, 33, 0.08); /* Vivid Orange 8% */
@@ -150,7 +153,7 @@ body {
   flex-direction: column;
 
   background-color: var(--bg);
-  color: var(--green);
+  color: var(--accent-green);
   font-family: var(--font-serif);
   line-height: 1.6;
   margin: 0;
@@ -175,7 +178,7 @@ body::after {
 
 header#site-header {
   background-color: var(--panel);
-  color: var(--green);
+  color: var(--accent-green);
   box-shadow: 0 2px 5px var(--overlay-dark);
   position: fixed;
   top: 0;
@@ -202,17 +205,20 @@ header#site-header {
   min-width: 0;
 }
 
+/* —— Logotype SVG element hardcodded in HTML —— */
 .nav-custom {
-  min-width: 20px;
+  display: flex;
+  align-items: center;
+  min-width: 0;   /* no floor — let the grid squeeze this before anything else */
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: hidden;
-  color: var(--green);
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  font-style: italic;
-  font-weight: 700;
-  text-align: left;
+}
+
+.nav-custom .nav-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 186px; /* "full size" cap ≈ target-height-px × (465 / 70); 186px ≈ 28px tall */
+  fill: var(--violet);
 }
 
 .nav-center {
@@ -254,7 +260,7 @@ header#site-header {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--green);
+  color: var(--accent-green);
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
@@ -393,7 +399,7 @@ header#site-header {
 .font-btn {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.5);
-  color: var(--green);
+  color: var(--accent-green);
   border-radius: 6px;
   width: 32px;
   height: 32px;
@@ -412,13 +418,23 @@ header#site-header {
   border-color: var(--white);
 }
 
+#fontDecBtn,
+#fontIncBtn {
+  display: none;
+}
+
+html.is-template-view #fontDecBtn,
+html.is-template-view #fontIncBtn {
+  display: flex;
+}
+
 
 /* ==========================================================================
    FOOTER
    ========================================================================== */
 
 footer {
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* footer's own place inside body's flex layout — unrelated to its own grid below */
 
   background-color: var(--panel);
   color: var(--accent-green);
@@ -430,23 +446,22 @@ footer {
   width: 100%;
   box-sizing: border-box;
 
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 20px;
+  gap: 8px 20px;
   z-index: 3;
 }
 
 html.is-template-view footer {
   margin-top: 85px;
   padding-bottom: 30px;
-  flex-wrap: wrap;
 }
 
 html.is-template-view footer::after {
   content: "";
   display: block;
-  flex: 0 0 100%;
+  grid-column: 1 / -1;
 
   width: 38px;
   height: 38px;
@@ -466,7 +481,6 @@ html.is-template-view footer::after {
 }
 
 footer nav {
-  flex: 1;
   font-size: 0.9rem;
   line-height: 1.8;
 }
@@ -479,6 +493,146 @@ footer nav.right {
   text-align: left;
   color: var(--muted);
 }
+
+/* ---- Two-state footer text: home copyright line vs. template-view ticker ---- */
+
+.footer-template-text,
+.footer-home-text {
+  grid-column: 1 / -1;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.footer-home-text {
+  display: block;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.footer-template-text {
+  display: none;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--violet);
+}
+
+html.is-template-view .footer-template-text {
+  display: block;
+}
+
+html.is-template-view .footer-home-text {
+  display: none;
+}
+
+.footer-marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.footer-marquee-track span {
+  flex: 0 0 auto;
+  padding-right: 60px;
+}
+
+.footer-marquee-track span:not(:first-child) {
+  display: none;
+}
+
+.footer-marquee-track.marquee span {
+  display: inline-block;
+}
+
+.footer-marquee-track.marquee {
+  animation: footer-marquee-loop var(--marquee-duration, 20s) linear infinite;
+}
+
+@keyframes footer-marquee-loop {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-marquee-track.marquee {
+    animation: none;
+  }
+}
+
+.footer-home-text {
+  grid-column: 1 / -1;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  color: var(--muted);
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  line-height: 1.5;
+
+  text-align: center;
+
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.footer-template-text {
+  grid-column: 1 / -1;
+
+  width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+  white-space: nowrap;
+
+  color: var(--violet);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+.footer-marquee {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.footer-marquee.marquee {
+  animation: footer-marquee-scroll var(--marquee-duration, 8s) linear infinite;
+  padding-right: 40px;
+}
+
+@keyframes footer-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(var(--marquee-offset));
+  }
+}
+
+.footer-template-text {
+  display: none;
+}
+
+.footer-home-text {
+  display: block;
+}
+
+html.is-template-view .footer-template-text {
+  display: block;
+}
+
+html.is-template-view .footer-home-text {
+  display: none;
+}
+
 
 /* ==========================================================================
    WELCOME VIEW / SEARCH
@@ -552,46 +706,115 @@ footer nav.right {
   margin: 10px auto 0;
 }
 
-#searchResults .search-result {
-  display: block;
-  padding: 10px 12px;
-  margin-bottom: 8px;
+.search-group {
   border: 1px solid var(--muted);
   border-radius: 6px;
-  background: none;
-  color: var(--text);
-  text-decoration: none;
+  padding: 12px 14px;
+  margin-bottom: 8px;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-#searchResults .search-result:last-child {
+.search-group:last-child {
   margin-bottom: 0;
 }
 
-#searchResults .search-result:hover,
-#searchResults .search-result:focus-visible {
-  background: var(--overlay-dark);
+.search-group:hover,
+.search-group:focus-within {
   border-color: var(--white);
-  color: var(--text);
-  text-decoration: none;
+  box-shadow: 0 8px 24px var(--shadow-dark);
 }
 
-.search-result-title {
-  display: block;
+.search-group.shade-a {
+  background-color: var(--shade-10);
+}
+
+.search-group.shade-b {
+  background-color: var(--shade-30);
+}
+
+.search-group-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* This style is the only that uses h6 for the title */
+.search-group-title {
+  margin: 0;
+  padding-left: 6px;
+  color: var(--accent);
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
   font-weight: 700;
-  margin-bottom: 3px;
+  line-height: 1.3;
 }
 
-.search-result-snippet {
-  display: block;
+.search-group-open-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: var(--noir);
+  color: var(--accent-green);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.search-group-open-btn:hover,
+.search-group-open-btn:focus-visible {
+  background: var(--panel);
+  color: var(--white);
+  border: 1px solid var(--white);
+  outline: none;
+  font-weight: 700;
+}
+
+.search-group-bullets {
+  list-style: disc;
+  color: var(--text);
   font-size: 0.85rem;
   line-height: 1.45;
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.search-group-bullets li {
+  margin-bottom: 4px;
   opacity: 0.75;
 }
 
-.search-result-snippet b {
+.search-group-bullets li:last-child {
+  margin-bottom: 0;
+}
+
+.search-group-bullets li::marker {
+  color: var(--accent-green);
+}
+
+.search-group-bullets b {
   color: var(--accent-green);
   font-weight: 700;
+  opacity: 1;
+}
+
+.search-group-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+  margin: 8px 0 0;
+}
+
+.search-sentinel {
+  height: 1px;
 }
 
 .search-empty {
@@ -769,24 +992,43 @@ footer nav.right {
 
 #content verse {
   display: block;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: calc(100% - 40px);
   color: var(--white);
   font-family: var(--font-serif);
   text-align: center;
   font-style: italic;
-  font-size: 1.6em;
+  font-size: 1.2em;          /* was: inherit – now matches <p> */
   font-weight: normal;
-  line-height: 1.5;
-  width: 100%;
-  max-width: 100%;
+  line-height: inherit;
+  overflow-wrap: break-word;
   padding: 16px 30px;
-  margin: 12px auto;
+  margin: 20px auto;
+  border-left: 4px solid var(--accent-green);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 8px 0 20px rgba(76, 175, 80, 0.04);
   text-shadow: 0 0 0.5px var(--accent), 0 0 4px var(--accent);
+}
+
+#content verse strong,
+#content verse b {
+  color: var(--white) !important;
+  text-shadow:none !important;
+}
+
+@media (max-width: 520px) {
+  #content verse {
+    max-width: 95%;
+    padding: 14px 18px;
+    font-size: 1.1em;        /* was: 1.3 (missing unit) – now a sane size */
+  }
 }
 
 #content blockquote {
   color: var(--white);
   line-height: 1.5;
-  font-size: 1.3em;
+  font-size: 1.2em;
   text-align: justify;
   padding: 16px 25px;
   margin: 1em 20px;
@@ -796,15 +1038,13 @@ footer nav.right {
               5px 0 20px var(--accent-bg),
               inset 0 1px 2px var(--border-light-strong);
   border-radius: 12px;
-  text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent);
+  /* text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent); */
 }
 
 #content blockquote b,
 #content blockquote strong {
   font-style: normal;
-  text-transform: uppercase;
-  color: var(--accent-green);
-  text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent);
+  color: var(--cyan);
 }
 
 #content blockquote i,
@@ -815,7 +1055,7 @@ footer nav.right {
 
 #content h1, #content h2,
 #content h3, #content h4,
-#content h5, #content h6 {
+#content h5 {
   font-family: var(--font-sans);
   text-align: center;
   font-weight: 700;
@@ -900,7 +1140,7 @@ footer nav.right {
 
 #content h4 {
   position: relative;
-  color: var(--muted);
+  color: var(--peach);
   font-size: 1.4em;
   z-index: 2;
 }
@@ -923,11 +1163,6 @@ footer nav.right {
 #content h5 {
   color: var(--accent);
   font-size: 1.2em;
-}
-
-#content h6 {
-  color: var(--accent-green);
-  font-size: 1em;
 }
 
 /* ==========================================================================
@@ -1078,16 +1313,17 @@ footer nav.right {
   width: 60%;
   margin: 1em auto;
   border: 0;
-  border-top: 2px solid #509FFF;
+  border-top: 2px solid var(--neon-cyan); /* #509FFF; */
 }
 
 #content strong,
 #content b {
-  color: var(--accent-green);
+  font-weight: 700;
 }
 
 #content em,
 #content i {
+  font-style: italic;
   color: var(--white);
 }
 
