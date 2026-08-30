@@ -95,6 +95,7 @@
   /* Panels */
   --panel:   #250D3B; /* Dark Purple */
   --panel-2: #101823; /* Dark Blue-Gray */
+  --page-surround: #0A0A0C; /* Wide-screen gutter color — not shown on mobile */
 
   /* Shadows */
   --overlay-dark: rgba(0, 0, 0, 0.20); /* Black 20% */
@@ -144,7 +145,6 @@ body {
 
   min-height: 100%;
   margin: 0;
-  padding-top: 52px;
 }
 
 body {
@@ -157,7 +157,7 @@ body {
   font-family: var(--font-serif);
   line-height: 1.6;
   margin: 0;
-  padding: 0;
+  padding: 52px 0 0 0;
 }
 
 body::after {
@@ -168,8 +168,76 @@ body::after {
   left: 0;
   width: 8px;
   background-color: var(--accent);
-  z-index: 4;
   pointer-events: none;
+
+  /* soft raised-panel halo */
+  box-shadow:
+    2px 0 6px var(--shadow-dark);
+
+  z-index: 4;
+}
+
+/* ==========================================================================
+   WIDE-SCREEN FRAME
+   Mobile is untouched — same edge-to-edge layout as always. Past 720px,
+   header/#content/footer become a centered 720px column (#content already
+   had this max-width; header and footer now match it) and body shows
+   --page-surround in the gutters either side, with a lateral shadow halo
+   giving the column a "raised panel" edge.
+   ========================================================================== */
+
+@media (min-width: 721px) {
+  body {
+    background: var(--page-surround);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='auto' viewBox='0 0 80 93'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='seed-of-life' fill='%23101823' fill-opacity='0.4'%3E%3Cpath d='M6.8 93c0-5.7-1.1-11.7-3.2-17 3.6 4.5 8.2 8.3 13.1 11.2C20.3 89.3 30 93 34.1 93h12.7c1.6 0 4.1-.8 5.6-1.2 9.4-2.7 17.8-7.8 24-15.5-1.9 5.3-3 11-3 16.7h1.2c0-4.7 2.1-18.8 5.5-22v-2.5c-3.6-4.9-5.4-16.1-5.4-22.1 0-6.2 1.7-16.7 5.4-21.7V22c-3.6-4.8-5.5-16.1-5.5-22h-1.2c.1 5.6 1 11.2 2.9 16.6C70.2 9.1 56.6 0 46.7 0H34.1C23.6 0 10 9.2 3.8 16.8c2-5.4 3-11.1 3-16.8H5.6C5.5 7.7 3.7 15.3.1 22.1L0 22v2.6l.1-.1c3.6 6.7 5.5 14.2 5.5 21.8C5.6 54 3.7 61.7 0 68.5v2.6-.1c3.7 6.7 5.6 14.4 5.6 22zm33.3-1.3c-3.9-6.6-5.5-14.3-5.5-22 0-7.6 1.7-15.4 5.5-22 3.9 6.6 5.5 14.3 5.5 22 0 7.6-1.6 15.4-5.5 22m-3.9-5.4c-7.3-8.8-17.7-14.8-29-16.6C18.5 68 29 62 36.3 53.2c-2 5.4-3 10.8-3 16.6 0 5.5 1 11.3 2.9 16.5m7.8-33C51.3 62 61.7 68 73 69.7c-11.3 1.8-21.8 7.7-29 16.6 2-5.4 2.9-10.9 2.9-16.6 0-5.5-.9-11.3-2.9-16.4m-2.8 39c7.7-13 22.9-21.7 38-21.9-6.8 13.2-23.6 21.5-38 21.9M79.1 69c-15.1-.2-30.2-8.7-37.8-21.9 14.3 0 30.9 9.2 37.8 21.9m-2.7-6C69 54.3 58.6 48.2 47.3 46.5c10.7-1.6 22.2-8 29-16.5-1.9 5.3-2.9 10.8-2.9 16.4 0 5.5.9 11.5 3 16.6M41.2 45.9c7.6-13 23-21.7 38-22-7.3 12.9-23.3 22-38 22m2.8-6c2-5.4 2.9-11 2.9-16.7 0-5.5-.9-11.2-2.9-16.4 7.3 8.8 17.8 14.6 29 16.5-11.3 1.7-21.8 7.8-29 16.6m35.1-17.3C64 22.3 48.8 13.8 41.1.7c15.2.4 30.6 8.6 38 21.9m-39-21.2C44 8 45.6 15.7 45.6 23.3s-1.7 15.4-5.5 22c-3.9-6.6-5.6-14.3-5.6-22 0-7.6 1.7-15.4 5.6-21.9m-3.9 38.3C29 31.1 18.6 25.1 7.5 23.3 18.6 21.4 29 15.5 36.2 6.8c-2 5.3-2.9 10.8-2.9 16.5 0 5.5.9 11.3 2.9 16.4M39 .7c-7.5 13-22.9 21.7-37.9 22C9.2 9.4 23.6 1.1 39 .7m0 45.2c-15.5-.4-29.9-8.8-37.9-22 15.9.3 29.5 8.6 37.9 22m-32.1.6c0-5.7-1.1-11.4-3.1-16.7 7.3 8.9 17.9 15.1 29.3 16.8-10.9 1.6-22.7 8.2-29.4 16.9 2-5.5 3.2-11.2 3.2-17m32.1.6C31.4 60 16.2 68.8 1.2 69 9.1 55.9 23.6 47.5 39 47.1m-.1 45.2C24.3 92.2 8.5 83 1.2 70.4c15.3.4 29.9 8.6 37.7 21.9' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  header#site-header {
+    left: calc(50% - 360px);
+    right: calc(50% - 360px);
+    width: auto;
+    box-shadow:
+      0 2px 5px var(--overlay-dark),
+      -8px 0 16px var(--shadow-dark),
+       8px 0 16px var(--shadow-dark);
+  }
+
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    box-shadow:
+      0 -2px 5px var(--overlay-dark),
+      -8px 0 16px var(--shadow-dark),
+       8px 0 16px var(--shadow-dark);
+  }
+
+  body::after {
+    left: calc(50% - 360px);
+  }
+}
+
+/* ==========================================================================
+   CONTENT TRANSITION
+   #content slides in from the right + fades in on first paint and on
+   every navigation (loadTemplate/goHome/backToSearchResults toggle these
+   classes — see app.js). Going "back" additionally plays this in reverse
+   on the way out, before the DOM swap, so it feels dismissed rather than
+   just replaced. header/footer are persistent chrome and never animate.
+   ========================================================================== */
+
+#content.content-offscreen-right {
+  transform: translateX(24px);
+  opacity: 0;
+}
+
+#content.content-notransition {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #content {
+    transition: none;
+  }
 }
 
 /* ==========================================================================
@@ -188,6 +256,8 @@ header#site-header {
 }
 
 #top-nav {
+  position: relative;
+
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
@@ -263,7 +333,7 @@ header#site-header {
   color: var(--accent-green);
   font-family: var(--font-sans);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 6px 10px;
   border-radius: 6px;
   max-width: 60vw;
@@ -346,16 +416,21 @@ header#site-header {
   display: none;
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 0;
+  left: auto;
+  transform: none;
+
   margin-top: 6px;
+
   background: var(--panel-2);
   border: 1px solid var(--overlay-light);
   border-radius: 8px;
+
   min-width: 240px;
   max-width: min(90vw, 420px);
   max-height: 60vh;
   overflow-y: auto;
+
   box-shadow: 0 8px 24px var(--shadow-dark);
   z-index: 1001;
 }
@@ -434,27 +509,32 @@ html.is-template-view #fontIncBtn {
    ========================================================================== */
 
 footer {
-  flex: 0 0 auto; /* footer's own place inside body's flex layout — unrelated to its own grid below */
+  flex: 0 0 auto; /* footer’s own place inside body’s flex layout — unrelated to its own grid below */
+  align-self: stretch;
+
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 
   background-color: var(--panel);
   color: var(--accent-green);
   border-top: 2px solid var(--panel-2);
-  margin-top: 25px;
+  margin-top: 0;
   padding: 10px 20px;
+
   text-align: center;
   box-shadow: 0 -2px 5px var(--overlay-dark);
-  width: 100%;
-  box-sizing: border-box;
 
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 8px 20px;
-  z-index: 3;
+
+  z-index: 9; /* above body::after’s 4 */
 }
 
 html.is-template-view footer {
-  margin-top: 85px;
+  margin-top: 0;
   padding-bottom: 30px;
 }
 
@@ -502,7 +582,7 @@ footer nav.right {
   width: 100%;
   box-sizing: border-box;
   font-family: var(--font-serif);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   line-height: 1.5;
   text-align: center;
 }
@@ -520,6 +600,10 @@ footer nav.right {
   overflow: hidden;
   white-space: nowrap;
   color: var(--violet);
+
+  /* Smooth fade out on both edges */
+  -webkit-mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
 }
 
 html.is-template-view .footer-template-text {
@@ -873,7 +957,7 @@ html.is-template-view .footer-home-text {
   object-fit: cover;
 
   -webkit-user-drag: none;
-  -webkit-touch-callout: none; /* stops iOS Safari's long-press menu */
+  -webkit-touch-callout: none; /* stops iOS Safari’s long-press menu */
   -webkit-user-select: none;
   user-select: none;
   user-drag: none;
@@ -908,6 +992,7 @@ html.is-template-view .footer-home-text {
   bottom: 0;
   height: 25%;
   background: rgba(0, 0, 0, 0.6);
+  border-top: 4px solid var(--overlay-dark);
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -960,13 +1045,20 @@ html.is-template-view .footer-home-text {
 
 #content {
   flex: 1 0 auto;
-
   font-size: 16px;
+
   max-width: 720px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+
   touch-action: manipulation;
+  background: var(--bg); /* was implicit (just showing through to body) — now explicit */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='auto' viewBox='0 0 80 93'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='seed-of-life' fill='%230A0A0C' fill-opacity='0.23'%3E%3Cpath d='M6.8 93c0-5.7-1.1-11.7-3.2-17 3.6 4.5 8.2 8.3 13.1 11.2C20.3 89.3 30 93 34.1 93h12.7c1.6 0 4.1-.8 5.6-1.2 9.4-2.7 17.8-7.8 24-15.5-1.9 5.3-3 11-3 16.7h1.2c0-4.7 2.1-18.8 5.5-22v-2.5c-3.6-4.9-5.4-16.1-5.4-22.1 0-6.2 1.7-16.7 5.4-21.7V22c-3.6-4.8-5.5-16.1-5.5-22h-1.2c.1 5.6 1 11.2 2.9 16.6C70.2 9.1 56.6 0 46.7 0H34.1C23.6 0 10 9.2 3.8 16.8c2-5.4 3-11.1 3-16.8H5.6C5.5 7.7 3.7 15.3.1 22.1L0 22v2.6l.1-.1c3.6 6.7 5.5 14.2 5.5 21.8C5.6 54 3.7 61.7 0 68.5v2.6-.1c3.7 6.7 5.6 14.4 5.6 22zm33.3-1.3c-3.9-6.6-5.5-14.3-5.5-22 0-7.6 1.7-15.4 5.5-22 3.9 6.6 5.5 14.3 5.5 22 0 7.6-1.6 15.4-5.5 22m-3.9-5.4c-7.3-8.8-17.7-14.8-29-16.6C18.5 68 29 62 36.3 53.2c-2 5.4-3 10.8-3 16.6 0 5.5 1 11.3 2.9 16.5m7.8-33C51.3 62 61.7 68 73 69.7c-11.3 1.8-21.8 7.7-29 16.6 2-5.4 2.9-10.9 2.9-16.6 0-5.5-.9-11.3-2.9-16.4m-2.8 39c7.7-13 22.9-21.7 38-21.9-6.8 13.2-23.6 21.5-38 21.9M79.1 69c-15.1-.2-30.2-8.7-37.8-21.9 14.3 0 30.9 9.2 37.8 21.9m-2.7-6C69 54.3 58.6 48.2 47.3 46.5c10.7-1.6 22.2-8 29-16.5-1.9 5.3-2.9 10.8-2.9 16.4 0 5.5.9 11.5 3 16.6M41.2 45.9c7.6-13 23-21.7 38-22-7.3 12.9-23.3 22-38 22m2.8-6c2-5.4 2.9-11 2.9-16.7 0-5.5-.9-11.2-2.9-16.4 7.3 8.8 17.8 14.6 29 16.5-11.3 1.7-21.8 7.8-29 16.6m35.1-17.3C64 22.3 48.8 13.8 41.1.7c15.2.4 30.6 8.6 38 21.9m-39-21.2C44 8 45.6 15.7 45.6 23.3s-1.7 15.4-5.5 22c-3.9-6.6-5.6-14.3-5.6-22 0-7.6 1.7-15.4 5.6-21.9m-3.9 38.3C29 31.1 18.6 25.1 7.5 23.3 18.6 21.4 29 15.5 36.2 6.8c-2 5.3-2.9 10.8-2.9 16.5 0 5.5.9 11.3 2.9 16.4M39 .7c-7.5 13-22.9 21.7-37.9 22C9.2 9.4 23.6 1.1 39 .7m0 45.2c-15.5-.4-29.9-8.8-37.9-22 15.9.3 29.5 8.6 37.9 22m-32.1.6c0-5.7-1.1-11.4-3.1-16.7 7.3 8.9 17.9 15.1 29.3 16.8-10.9 1.6-22.7 8.2-29.4 16.9 2-5.5 3.2-11.2 3.2-17m32.1.6C31.4 60 16.2 68.8 1.2 69 9.1 55.9 23.6 47.5 39 47.1m-.1 45.2C24.3 92.2 8.5 83 1.2 70.4c15.3.4 29.9 8.6 37.7 21.9' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  transition: transform 0.3s ease, opacity 0.3s ease;
+
+  /* soft raised-panel halo (uniform top, right, left glow) */
+  box-shadow: 0 -2px 8px 2px var(--shadow-dark);
 }
 
 #content p {
@@ -999,7 +1091,7 @@ html.is-template-view .footer-home-text {
   font-family: var(--font-serif);
   text-align: center;
   font-style: italic;
-  font-size: 1.2em;          /* was: inherit – now matches <p> */
+  font-size: 1.2em;  /* was: inherit – now matches <p> */
   font-weight: normal;
   line-height: inherit;
   overflow-wrap: break-word;
@@ -1021,7 +1113,7 @@ html.is-template-view .footer-home-text {
   #content verse {
     max-width: 95%;
     padding: 14px 18px;
-    font-size: 1.1em;        /* was: 1.3 (missing unit) – now a sane size */
+    font-size: 1.1em;  /* was: 1.3 (missing unit) – now a sane size */
   }
 }
 
@@ -1032,13 +1124,13 @@ html.is-template-view .footer-home-text {
   text-align: justify;
   padding: 16px 25px;
   margin: 1em 20px;
-  border-left: 4px solid var(--accent);
-  background-color: var(--panel-2);
-  box-shadow: -5px 0 20px var(--accent-bg),
-              5px 0 20px var(--accent-bg),
+  border-left: 4px solid var(--muted);
+  background-color: var(--noir);
+  /* box-shadow: -5px 0 20px var(--noir),
+              5px 0 20px var(--noir),
               inset 0 1px 2px var(--border-light-strong);
   border-radius: 12px;
-  /* text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent); */
+  text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent); */
 }
 
 #content blockquote b,
@@ -1066,6 +1158,7 @@ html.is-template-view .footer-home-text {
 #content h1 {
   position: relative;
   color: var(--muted);
+  text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent);
   line-height: 1.2;
   padding-top: 12px;
   padding-bottom: 12px;
@@ -1078,10 +1171,10 @@ html.is-template-view .footer-home-text {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  left: 0;
+  right: 0;
+  box-shadow: 0 -6px 6px var(--noir),  /* Top shadow */
+              0 6px 6px var(--overlay-light);  /* Bottom shadow */
   background-color: var(--shadow-dark);
   border-top: 1px solid var(--neon-cyan);
   opacity: 0.9;
@@ -1093,6 +1186,7 @@ html.is-template-view .footer-home-text {
   text-transform: capitalize;
   font-weight: 700;
   color: var(--violet);
+  text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent);
   margin: 0;
   line-height: 1.2;
   padding: 10px 10px 10px 20px;
@@ -1104,10 +1198,10 @@ html.is-template-view .footer-home-text {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  left: 0;
+  right: 0;
+  box-shadow: 0 -6px 6px var(--noir),  /* Top shadow */
+              0 6px 6px var(--overlay-light);  /* Bottom shadow */
   background-color: var(--shadow-dark);
   border-top: 2px solid var(--neon-cyan);
   opacity: 0.7;
@@ -1117,6 +1211,7 @@ html.is-template-view .footer-home-text {
 #content h3 {
   position: relative;
   color: var(--lime);
+  text-shadow: 0 0 0.5px var(--accent), 0 0 2px var(--accent);
   line-height: 1.2;
   padding: 8px 10px;
   margin-top: 12px;
@@ -1128,10 +1223,10 @@ html.is-template-view .footer-home-text {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  left: 0;
+  right: 0;
+  box-shadow: 0 -6px 6px var(--noir),  /* Top shadow */
+              0 6px 6px var(--overlay-light);  /* Bottom shadow */
   background-color: var(--shadow-dark);
   border-top: 3px solid var(--violet);
   opacity: 0.5;
@@ -1150,10 +1245,10 @@ html.is-template-view .footer-home-text {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  left: 0;
+  right: 0;
+  box-shadow: 0 -6px 6px var(--noir),  /* Top shadow */
+              0 6px 6px var(--overlay-light);  /* Bottom shadow */
   background-color: var(--shadow-dark);
   border-top: 4px solid var(--neon-cyan);
   opacity: 0.3;
@@ -1335,8 +1430,7 @@ html.is-template-view .footer-home-text {
 @media (max-width: 600px) {
 
   body {
-    padding-left: 0;
-    border-left-width: 4px;
+    padding-left: 0;  /* border-left-width: 4px; */
   }
 
   #top-nav {

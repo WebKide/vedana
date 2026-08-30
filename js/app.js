@@ -424,6 +424,42 @@
     });
   }
 
+  var CONTENT_TRANSITION_MS = 300; // keep in sync with #content's CSS transition duration
+
+  function swapContentWithTransition(applyFn) {
+    if (!contentEl) { applyFn(); return; }
+
+    contentEl.classList.add('content-notransition', 'content-offscreen-right');
+    applyFn();
+    void contentEl.offsetWidth; // flush layout so the snap-to-offscreen commits instantly
+
+    contentEl.classList.remove('content-notransition');
+
+    requestAnimationFrame(function () {
+      contentEl.classList.remove('content-offscreen-right');
+    });
+  }
+
+  function exitContentThen(afterExit) {
+    if (!contentEl) { afterExit(); return; }
+
+    var done = false;
+    function finish(e) {
+      if (e && e.target !== contentEl) return;
+      if (done) return;
+      done = true;
+      contentEl.removeEventListener('transitionend', finish);
+      afterExit();
+    }
+
+    contentEl.addEventListener('transitionend', finish);
+    // Fallback in case transitionend never fires (prefers-reduced-motion,
+    // a backgrounded tab throttling timers, etc.)
+    setTimeout(finish, CONTENT_TRANSITION_MS + 50);
+
+    contentEl.classList.add('content-offscreen-right');
+  }
+
   // ---------------------------------------------------------------
   // Template loading / back-to-welcome
   // ---------------------------------------------------------------
@@ -440,38 +476,48 @@
         return r.text();
       })
       .then(function (fragment) {
-        contentEl.innerHTML = fragment;
-        initAccordions(contentEl);
-        contentEl.scrollTop = 0;
-        window.scrollTo(0, 0);
-        if (navTitleEl) navTitleEl.textContent = title || slug;
-        if (backBtn) backBtn.style.display = '';
-        initFooterMarquee();
+        swapContentWithTransition(function () {
+          contentEl.innerHTML = fragment;
+          initAccordions(contentEl);
+          contentEl.scrollTop = 0;
+          window.scrollTo(0, 0);
+          if (navTitleEl) navTitleEl.textContent = title || slug;
+          if (backBtn) backBtn.style.display = '';
+          initFooterMarquee();
+        });
       })
       .catch(function (err) {
         console.error('[app] loadTemplate failed:', err);
         var msg = isFileProtocol()
           ? 'Este sitio debe ejecutarse desde un servidor web local, no abrirse directamente como un archivo. Ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre <br/><b><code>http://localhost:8000/</code></b>.'
           : 'Lo sentimos mucho, pero esa presentación no se pudo abrir correctamente.';
-        contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
-        if (navTitleEl) navTitleEl.textContent = title || slug;
-        if (backBtn) backBtn.style.display = '';
+        swapContentWithTransition(function () {
+          contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
+          if (navTitleEl) navTitleEl.textContent = title || slug;
+          if (backBtn) backBtn.style.display = '';
+        });
       });
   }
 
   function goHome() {
     if (!contentEl) return;
-    teardownResultsObserver();
-    openedFromSearch = false;
-    stopFooterMarquee();
-    contentEl.innerHTML = WELCOME_HTML;
-    initAccordions(contentEl);
-    if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
-    if (backBtn) backBtn.style.display = 'none';
-    window.scrollTo(0, 0);
-    bindWelcomeSearch();
-    initSlideshow();
-    document.documentElement.classList.remove('is-template-view');
+
+    exitContentThen(function () {
+      teardownResultsObserver();
+      openedFromSearch = false;
+      stopFooterMarquee();
+      document.documentElement.classList.remove('is-template-view');
+
+      swapContentWithTransition(function () {
+        contentEl.innerHTML = WELCOME_HTML;
+        initAccordions(contentEl);
+        if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
+        if (backBtn) backBtn.style.display = 'none';
+        window.scrollTo(0, 0);
+        bindWelcomeSearch();
+        initSlideshow();
+      });
+    });
   }
 
   if (backBtn) {
@@ -1011,23 +1057,28 @@
   function backToSearchResults() {
     if (!contentEl) return;
 
-    stopFooterMarquee();
-    contentEl.innerHTML = WELCOME_HTML;
-    initAccordions(contentEl);
-    if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
-    if (backBtn) backBtn.style.display = 'none';
-    window.scrollTo(0, 0);
-    bindWelcomeSearch();
-    initSlideshow();
-    document.documentElement.classList.remove('is-template-view');
+    exitContentThen(function () {
+      stopFooterMarquee();
+      document.documentElement.classList.remove('is-template-view');
 
-    var input = document.getElementById('searchInput');
-    var clearBtn = document.getElementById('searchClearBtn');
-    if (input) input.value = lastQuery;
-    if (clearBtn) clearBtn.style.display = lastQuery.length ? '' : 'none';
+      swapContentWithTransition(function () {
+        contentEl.innerHTML = WELCOME_HTML;
+        initAccordions(contentEl);
+        if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
+        if (backBtn) backBtn.style.display = 'none';
+        window.scrollTo(0, 0);
+        bindWelcomeSearch();
+        initSlideshow();
+      });
 
-    openedFromSearch = false;
-    runSearch(lastQuery);
+      var input = document.getElementById('searchInput');
+      var clearBtn = document.getElementById('searchClearBtn');
+      if (input) input.value = lastQuery;
+      if (clearBtn) clearBtn.style.display = lastQuery.length ? '' : 'none';
+
+      openedFromSearch = false;
+      runSearch(lastQuery);
+    });
   }
 
   var debouncedSearch = debounce(function (val) { runSearch(val); }, 150);
@@ -1056,4 +1107,8 @@
 
   bindWelcomeSearch();
   initSlideshow();
+
+  // Same enter transition as every navigation, so first paint and every
+  // subsequent template open/close feel like one consistent system.
+  swapContentWithTransition(function () {});
 })();
