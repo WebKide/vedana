@@ -53,11 +53,15 @@
   /* Mirrors the Python-side normalize_search_text() so indexed text and
      typed queries normalize the same way. */
   function normalizeQuery(str) {
+    var placeholder = '__ntilde__';
     return String(str || '')
+      .replace(/ñ/g, placeholder)
+      .replace(/Ñ/g, placeholder)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(new RegExp(placeholder, 'g'), 'ñ')
+      .replace(/[^a-z0-9ñ\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -80,6 +84,41 @@
   var navDropdown  = document.getElementById('navDropdown');
   var fontDecBtn   = document.getElementById('fontDecBtn');
   var fontIncBtn   = document.getElementById('fontIncBtn');
+
+  var templateSearchBtn =
+    document.getElementById('templateSearchBtn');
+
+  var templateSearchModal =
+    document.getElementById('templateSearchModal');
+
+  var templateSearchInput =
+    document.getElementById('templateSearchInput');
+
+  var templateSearchClose =
+    document.getElementById('templateSearchClose');
+
+  var templateSearchPrev =
+    document.getElementById('templateSearchPrev');
+
+  var templateSearchNext =
+    document.getElementById('templateSearchNext');
+
+  var templateSearchStatus =
+    document.getElementById('templateSearchStatus');
+
+  var currentTemplateSlug = null;
+
+  var templateSearchHits = [];
+  var templateSearchIndex = -1;
+
+  /*
+   * One search state per template.
+   *
+   * This is persisted with the existing dbGet/dbSet system, so returning
+   * to a presentation can restore its previous query.
+   */
+  var templateSearchStates =
+    dbGet('templateSearchStates', {});
 
   var WELCOME_HTML = contentEl ? contentEl.innerHTML : '';
   var DEFAULT_TITLE = navTitleEl ? navTitleEl.textContent : 'Presentaciones';
@@ -234,9 +273,18 @@
   // ---------------------------------------------------------------
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-      closeMenu();
+
+    if (e.key !== 'Escape') return;
+
+    if (
+      templateSearchModal &&
+      templateSearchModal.classList.contains('is-open')
+    ) {
+      closeTemplateSearch();
+      return;
     }
+
+    closeMenu();
   });
 
 
@@ -246,12 +294,28 @@
 
   if (navDropdown) {
     navDropdown.addEventListener('click', function (e) {
+
+      var searchButton =
+        e.target.closest('#templateSearchBtn');
+
+      if (searchButton) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        closeMenu();
+        openTemplateSearch();
+
+        return;
+      }
+
       var link = e.target.closest('a[data-slug]');
+
       if (!link) return;
 
       e.preventDefault();
 
       openedFromSearch = false;
+
       loadTemplate(
         link.getAttribute('data-slug'),
         link.textContent.trim()
@@ -373,6 +437,611 @@
     });
   }
 
+  function expandAllAccordions(root) {
+    if (!root) return;
+
+    var headings = Array.prototype.filter.call(root.children, isHeading)
+      .filter(function (h) {
+        return h.classList.contains('accordion-toggle');
+      });
+
+    headings.forEach(function (heading) {
+      var body = heading.nextElementSibling;
+
+      if (!body || !body.classList.contains('accordion-body')) {
+        return;
+      }
+
+      heading.setAttribute('aria-expanded', 'true');
+      body.classList.remove('is-collapsed');
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Template-view search
+  //
+  // Unlike the welcome search, this searches the actual DOM currently
+  // displayed in #content.
+  //
+  // Fuse is used on individual text nodes so its fuzzy match ranges
+  // can be converted into real visual highlights.
+  //
+  // The search state is remembered per template.
+  // ---------------------------------------------------------------
+
+  var TEMPLATE_SEARCH_MIN = 3;
+
+  function isSearchableTextNode(node) {
+    if (!node || node.nodeType !== Node.TEXT_NODE) {
+      return false;
+    }
+
+    if (!node.nodeValue || !node.nodeValue.trim()) {
+      return false;
+    }
+
+    var parent = node.parentElement;
+
+    if (!parent) return false;
+
+    var tag = parent.tagName;
+
+    if (
+      tag === 'SCRIPT' ||
+      tag === 'STYLE' ||
+      tag === 'NOSCRIPT' ||
+      tag === 'SVG'
+    ) {
+      return false;
+    }
+
+    if (
+      parent.closest('#templateSearchModal') ||
+      parent.closest('.accordion-chevron')
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+
+  function getTemplateTextNodes() {
+    var nodes = [];
+
+    if (!contentEl) return nodes;
+
+    var walker = document.createTreeWalker(
+      contentEl,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function (node) {
+          return isSearchableTextNode(node)
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_REJECT;
+        }
+      }
+    );
+
+    var node;
+
+    while ((node = walker.nextNode())) {
+      nodes.push(node);
+    }
+
+    return nodes;
+  }
+
+
+  /*
+   * normalizeQuery() deliberately removes diacritics and punctuation.
+   *
+   * This version additionally builds a character-position map so Fuse
+   * indices can be translated back to positions in the original DOM
+   * text node.
+   */
+  function normalizeTextWithMap(text) {
+    var normalized = '';
+    var map = [];
+
+    var chars = Array.from(String(text || ''));
+
+    chars.forEach(function (char, charIndex) {
+
+      var start = 0;
+
+      for (var i = 0; i < charIndex; i++) {
+        start += chars[i].length;
+      }
+
+      var end = start + char.length;
+
+      var piece = char
+        .replace(/ñ/g, '__ntilde__')
+        .replace(/Ñ/g, '__ntilde__')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/__ntilde__/g, 'ñ')
+        .toLowerCase();
+
+      /*
+       * Punctuation becomes a space, exactly like normalizeQuery().
+       */
+      piece = piece.replace(/[^a-z0-9ñ\s]/g, ' ');
+
+      for (var j = 0; j < piece.length; j++) {
+        normalized += piece[j];
+        map.push({
+          start: start,
+          end: end
+        });
+      }
+    });
+
+    /*
+     * Collapse whitespace while retaining the original source range.
+     */
+    var collapsed = '';
+    var collapsedMap = [];
+    var pendingSpace = null;
+
+    for (var k = 0; k < normalized.length; k++) {
+
+      var ch = normalized[k];
+
+      if (/\s/.test(ch)) {
+        if (!pendingSpace) {
+          pendingSpace = map[k];
+        }
+        continue;
+      }
+
+      if (pendingSpace && collapsed.length) {
+        collapsed += ' ';
+        collapsedMap.push(pendingSpace);
+      }
+
+      pendingSpace = null;
+
+      collapsed += ch;
+      collapsedMap.push(map[k]);
+    }
+
+    return {
+      text: collapsed,
+      map: collapsedMap
+    };
+  }
+
+
+  /*
+   * Remove all existing template-search highlights.
+   *
+   * unwraps the span rather than reconstructing #content, so accordion
+   * state and the user's current scroll position remain untouched.
+   */
+  function clearTemplateSearchHighlights() {
+
+    if (!contentEl) return;
+
+    var highlights =
+      contentEl.querySelectorAll('.template-search-hit');
+
+    Array.prototype.forEach.call(highlights, function (highlight) {
+
+      var parent = highlight.parentNode;
+
+      while (highlight.firstChild) {
+        parent.insertBefore(highlight.firstChild, highlight);
+      }
+
+      parent.removeChild(highlight);
+
+      parent.normalize();
+    });
+
+    templateSearchHits = [];
+    templateSearchIndex = -1;
+  }
+
+
+  /*
+   * Highlight one or more ranges inside one text node.
+   *
+   * Work backwards so earlier DOM positions are not invalidated while
+   * later ranges are being wrapped.
+   */
+  function highlightTextNode(node, ranges) {
+
+    ranges.sort(function (a, b) {
+      return b.start - a.start;
+    });
+
+    ranges.forEach(function (range) {
+
+      if (range.end <= range.start) return;
+
+      var text = node.nodeValue;
+
+      if (
+        range.start < 0 ||
+        range.end > text.length ||
+        range.start >= range.end
+      ) {
+        return;
+      }
+
+      var middle = node.splitText(range.start);
+
+      var after = middle.splitText(range.end - range.start);
+
+      var hit = document.createElement('span');
+      hit.className = 'template-search-hit';
+
+      middle.parentNode.insertBefore(hit, middle);
+      hit.appendChild(middle);
+
+      /*
+       * Store the actual span rather than the original text node.
+       * This makes PREV/NEXT extremely cheap.
+       */
+      templateSearchHits.push(hit);
+
+      void after;
+    });
+  }
+
+
+  /*
+   * Run Fuse against every searchable text node.
+   */
+  function runTemplateSearch(query) {
+
+    clearTemplateSearchHighlights();
+
+    var q = normalizeQuery(query);
+
+    if (!q || q.length < TEMPLATE_SEARCH_MIN) {
+      updateTemplateSearchControls();
+      return;
+    }
+
+    var textNodes = getTemplateTextNodes();
+
+    if (!textNodes.length || typeof Fuse === 'undefined') {
+      updateTemplateSearchControls();
+      return;
+    }
+
+    var items = [];
+
+    textNodes.forEach(function (node) {
+
+      var mapped = normalizeTextWithMap(node.nodeValue);
+
+      if (!mapped.text) return;
+
+      items.push({
+        node: node,
+        normalized: mapped.text,
+        map: mapped.map
+      });
+    });
+
+    if (!items.length) {
+      updateTemplateSearchControls();
+      return;
+    }
+
+    var fuse = new Fuse(items, {
+      includeMatches: true,
+
+      ignoreLocation: true,
+      distance: 3600,
+      threshold: 0.3,
+      minMatchCharLength: TEMPLATE_SEARCH_MIN,
+
+      keys: ['normalized']
+    });
+
+    var results = fuse.search(q);
+
+    /*
+     * Group Fuse match ranges by their original text node.
+     */
+    var rangesByNode = new Map();
+
+    results.forEach(function (result) {
+
+      var item = result.item;
+
+      if (!result.matches || !result.matches.length) {
+        return;
+      }
+
+      result.matches.forEach(function (match) {
+
+        if (!match.indices || !match.indices.length) {
+          return;
+        }
+
+        match.indices.forEach(function (indices) {
+
+          var start = indices[0];
+          var end = indices[1] + 1;
+
+          if (
+            start < 0 ||
+            end > item.map.length ||
+            start >= end
+          ) {
+            return;
+          }
+
+          var originalStart = item.map[start].start;
+          var originalEnd = item.map[end - 1].end;
+
+          if (!rangesByNode.has(item.node)) {
+            rangesByNode.set(item.node, []);
+          }
+
+          rangesByNode.get(item.node).push({
+            start: originalStart,
+            end: originalEnd
+          });
+        });
+      });
+    });
+
+    /*
+     * Remove duplicate / overlapping ranges for each text node.
+     */
+    rangesByNode.forEach(function (ranges, node) {
+
+      ranges.sort(function (a, b) {
+        if (a.start !== b.start) {
+          return a.start - b.start;
+        }
+        return a.end - b.end;
+      });
+
+      var merged = [];
+
+      ranges.forEach(function (range) {
+
+        var previous = merged[merged.length - 1];
+
+        if (!previous || range.start > previous.end) {
+          merged.push({
+            start: range.start,
+            end: range.end
+          });
+        } else {
+          previous.end = Math.max(previous.end, range.end);
+        }
+      });
+
+      /*
+       * The DOM is modified while walking through the ranges, so
+       * highlightTextNode receives the original node and processes
+       * everything backwards.
+       */
+      highlightTextNode(node, merged);
+    });
+
+    /*
+     * highlightTextNode() collected hits backwards within each node.
+     * Re-sort globally into document order.
+     */
+    templateSearchHits.sort(function (a, b) {
+
+      if (a === b) return 0;
+
+      var position = a.compareDocumentPosition(b);
+
+      if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+      if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+
+      return 0;
+    });
+
+    if (templateSearchHits.length) {
+      templateSearchIndex = 0;
+      setActiveTemplateSearchHit();
+    }
+
+    updateTemplateSearchControls();
+  }
+
+
+  /*
+   * Mark the current result and scroll it into the center of the
+   * visible area.
+   */
+  function setActiveTemplateSearchHit() {
+
+    templateSearchHits.forEach(function (hit, index) {
+
+      hit.classList.toggle(
+        'template-search-hit-active',
+        index === templateSearchIndex
+      );
+    });
+
+    if (templateSearchIndex < 0 ||
+        templateSearchIndex >= templateSearchHits.length) {
+      return;
+    }
+
+    var active = templateSearchHits[templateSearchIndex];
+
+    active.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }
+
+
+  function nextTemplateSearchHit() {
+
+    if (!templateSearchHits.length) return;
+
+    templateSearchIndex =
+      (templateSearchIndex + 1) %
+      templateSearchHits.length;
+
+    setActiveTemplateSearchHit();
+    updateTemplateSearchControls();
+  }
+
+
+  function previousTemplateSearchHit() {
+
+    if (!templateSearchHits.length) return;
+
+    templateSearchIndex =
+      (templateSearchIndex - 1 +
+        templateSearchHits.length) %
+      templateSearchHits.length;
+
+    setActiveTemplateSearchHit();
+    updateTemplateSearchControls();
+  }
+
+
+  function updateTemplateSearchControls() {
+
+    var count = templateSearchHits.length;
+
+    if (templateSearchPrev) {
+      templateSearchPrev.disabled = count === 0;
+    }
+
+    if (templateSearchNext) {
+      templateSearchNext.disabled = count === 0;
+    }
+
+    if (!templateSearchStatus) return;
+
+    if (!count) {
+      templateSearchStatus.textContent = '';
+      return;
+    }
+
+    templateSearchStatus.textContent =
+      (templateSearchIndex + 1) + ' / ' + count;
+  }
+
+
+  function saveTemplateSearchState() {
+
+    if (!currentTemplateSlug) return;
+
+    var query =
+      templateSearchInput
+        ? templateSearchInput.value
+        : '';
+
+    templateSearchStates[currentTemplateSlug] = {
+      query: query,
+      index: templateSearchIndex
+    };
+
+    dbSet('templateSearchStates', templateSearchStates);
+  }
+
+
+  function restoreTemplateSearchState() {
+
+    if (!currentTemplateSlug || !templateSearchInput) {
+      return;
+    }
+
+    var state = templateSearchStates[currentTemplateSlug];
+
+    if (!state || !state.query) {
+      templateSearchInput.value = '';
+      clearTemplateSearchHighlights();
+      updateTemplateSearchControls();
+      return;
+    }
+
+    templateSearchInput.value = state.query;
+
+    runTemplateSearch(state.query);
+
+    if (
+      templateSearchHits.length &&
+      typeof state.index === 'number'
+    ) {
+      templateSearchIndex =
+        Math.max(
+          0,
+          Math.min(state.index, templateSearchHits.length - 1)
+        );
+
+      setActiveTemplateSearchHit();
+      updateTemplateSearchControls();
+    }
+  }
+
+
+  function openTemplateSearch() {
+
+    if (!document.documentElement.classList.contains('is-template-view')) {
+      return;
+    }
+
+    /*
+     * This is deliberately explicit rather than toggleAllAccordions():
+     * searching must always expose every section.
+     */
+    expandAllAccordions(contentEl);
+
+    if (templateSearchModal) {
+      templateSearchModal.classList.add('is-open');
+      templateSearchModal.setAttribute('aria-hidden', 'false');
+    }
+
+    restoreTemplateSearchState();
+
+    requestAnimationFrame(function () {
+
+      if (templateSearchInput) {
+        templateSearchInput.focus();
+
+        /*
+         * Put the cursor at the end rather than selecting the old query.
+         */
+        var length = templateSearchInput.value.length;
+
+        try {
+          templateSearchInput.setSelectionRange(length, length);
+        } catch (e) {}
+      }
+    });
+  }
+
+
+  function closeTemplateSearch() {
+
+    saveTemplateSearchState();
+
+    /*
+     * Highlights are only visible while the modal is open.
+     * The query itself remains saved.
+     */
+    clearTemplateSearchHighlights();
+
+    if (templateSearchModal) {
+      templateSearchModal.classList.remove('is-open');
+      templateSearchModal.setAttribute('aria-hidden', 'true');
+    }
+
+    updateTemplateSearchControls();
+  }
+
   var accordionClickTimer = null;
   var ACCORDION_CLICK_DELAY = 250; // ms — long enough to catch a dblclick
 
@@ -466,6 +1135,9 @@
 
   function loadTemplate(slug, title) {
     if (!contentEl) return;
+
+    currentTemplateSlug = slug;
+
     stopSlideshow();
     teardownResultsObserver();
     document.documentElement.classList.add('is-template-view');
@@ -478,11 +1150,18 @@
       .then(function (fragment) {
         swapContentWithTransition(function () {
           contentEl.innerHTML = fragment;
+
           initAccordions(contentEl);
+
+          clearTemplateSearchHighlights();
+          updateTemplateSearchControls();
+
           contentEl.scrollTop = 0;
           window.scrollTo(0, 0);
+
           if (navTitleEl) navTitleEl.textContent = title || slug;
           if (backBtn) backBtn.style.display = '';
+
           initFooterMarquee();
         });
       })
@@ -490,7 +1169,7 @@
         console.error('[app] loadTemplate failed:', err);
         var msg = isFileProtocol()
           ? 'Este sitio debe ejecutarse desde un servidor web local, no abrirse directamente como un archivo. Ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre <br/><b><code>http://localhost:8000/</code></b>.'
-          : 'Lo sentimos mucho, pero esa presentación no se pudo abrir correctamente.';
+          : 'Lo sentimos mucho, pero esa presentación no se pudo abrir, es posible que todavía no esté disponible al público.';
         swapContentWithTransition(function () {
           contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
           if (navTitleEl) navTitleEl.textContent = title || slug;
@@ -747,7 +1426,7 @@
       console.error('[app] No se pudo cargar el search-index.json:', err);
       var resultsEl = document.getElementById('searchResults');
       if (resultsEl && isFileProtocol()) {
-        resultsEl.innerHTML = '<p class="search-empty">Search necesita un servidor web local: ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre: http://localhost:8000/.</p>';
+        resultsEl.innerHTML = '<p class="search-empty">Búsqueda necesita un servidor web local: ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre: http://localhost:8000/.</p>';
       }
     });
 
@@ -1106,6 +1785,73 @@
   }
 
   bindWelcomeSearch();
+
+  // ---------------------------------------------------------------
+  // Template search controls
+  // ---------------------------------------------------------------
+
+  if (templateSearchBtn) {
+    templateSearchBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      closeMenu();
+      openTemplateSearch();
+    });
+  }
+
+  if (templateSearchClose) {
+    templateSearchClose.addEventListener('click', function (e) {
+      e.preventDefault();
+      closeTemplateSearch();
+    });
+  }
+
+  if (templateSearchPrev) {
+    templateSearchPrev.addEventListener('click', function (e) {
+      e.preventDefault();
+      previousTemplateSearchHit();
+    });
+  }
+
+  if (templateSearchNext) {
+    templateSearchNext.addEventListener('click', function (e) {
+      e.preventDefault();
+      nextTemplateSearchHit();
+    });
+  }
+
+  if (templateSearchInput) {
+
+    templateSearchInput.addEventListener('input', function (e) {
+
+      var query = e.target.value;
+
+      runTemplateSearch(query);
+      saveTemplateSearchState();
+    });
+
+    templateSearchInput.addEventListener('keydown', function (e) {
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+
+        if (e.shiftKey) {
+          previousTemplateSearchHit();
+        } else {
+          nextTemplateSearchHit();
+        }
+
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeTemplateSearch();
+      }
+    });
+  }
+
   initSlideshow();
 
   // Same enter transition as every navigation, so first paint and every
