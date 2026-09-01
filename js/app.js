@@ -85,6 +85,12 @@
   var fontDecBtn   = document.getElementById('fontDecBtn');
   var fontIncBtn   = document.getElementById('fontIncBtn');
 
+  var contentEditableBtn =
+    document.getElementById('contentEditableBtn');
+
+  var layoutOutlineBtn =
+    document.getElementById('layoutOutlineBtn');
+
   var templateSearchBtn =
     document.getElementById('templateSearchBtn');
 
@@ -152,6 +158,100 @@
       fontSize = Math.min(FONT_MAX, fontSize + FONT_STEP);
       applyFontSize(fontSize);
       dbSet('fontSize', fontSize);
+    });
+  }
+
+
+  // ---------------------------------------------------------------
+  // Template developer tools
+  //
+  // These are intentionally ephemeral.
+  // Nothing is stored in localStorage.
+  //
+  // Refreshing the page restores the normal document.
+  // ---------------------------------------------------------------
+
+  function _applyContentEditable(enabled) {
+
+    if (enabled) {
+      // document.documentElement.setAttribute('contenteditable', '');
+      contentEl.setAttribute('contenteditable', '');
+    } else {
+      document.documentElement.removeAttribute('contenteditable');
+    }
+
+    if (contentEditableBtn) {
+      contentEditableBtn.setAttribute(
+        'aria-pressed',
+        enabled ? 'true' : 'false'
+      );
+
+      contentEditableBtn.classList.toggle(
+        'is-active',
+        enabled
+      );
+    }
+  }
+
+
+  /**
+   * Injects or removes the developer layout-outline <style> tag.
+   * @param {boolean} enabled
+   */
+  function _applyOutlines(enabled) {
+
+    var existing =
+      document.getElementById('wo-dev-outlines');
+
+    if (enabled && !existing) {
+
+      var s = document.createElement('style');
+
+      s.id = 'wo-dev-outlines';
+
+      s.textContent =
+        '* { outline: 1px solid red !important; }';
+
+      document.head.appendChild(s);
+
+    } else if (!enabled && existing) {
+
+      existing.remove();
+    }
+
+    if (layoutOutlineBtn) {
+      layoutOutlineBtn.setAttribute(
+        'aria-pressed',
+        enabled ? 'true' : 'false'
+      );
+
+      layoutOutlineBtn.classList.toggle(
+        'is-active',
+        enabled
+      );
+    }
+  }
+
+  if (contentEditableBtn) {
+
+    contentEditableBtn.addEventListener('click', function () {
+
+      var enabled =
+        !document.documentElement.hasAttribute('contenteditable');
+
+      _applyContentEditable(enabled);
+    });
+  }
+
+
+  if (layoutOutlineBtn) {
+
+    layoutOutlineBtn.addEventListener('click', function () {
+
+      var enabled =
+        !document.getElementById('wo-dev-outlines');
+
+      _applyOutlines(enabled);
     });
   }
 
@@ -1168,7 +1268,7 @@
       .catch(function (err) {
         console.error('[app] loadTemplate failed:', err);
         var msg = isFileProtocol()
-          ? 'Este sitio debe ejecutarse desde un servidor web local, no abrirse directamente como un archivo. Ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre <br/><b><code>http://localhost:8000/</code></b>.'
+          ? 'Este sitio debe ejecutarse desde un servidor web local, no abrirse directamente como un archivo. Ejecuta <code>python -m http.server 8000</code> en esta carpeta y, luego, abre <br/><b><code>http://localhost:8000/</code></b>.'
           : 'Lo sentimos mucho, pero esa presentación no se pudo abrir, es posible que todavía no esté disponible al público.';
         swapContentWithTransition(function () {
           contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
@@ -1185,6 +1285,10 @@
       teardownResultsObserver();
       openedFromSearch = false;
       stopFooterMarquee();
+
+      _applyContentEditable(false);
+      _applyOutlines(false);
+
       document.documentElement.classList.remove('is-template-view');
 
       swapContentWithTransition(function () {
@@ -1426,7 +1530,7 @@
       console.error('[app] No se pudo cargar el search-index.json:', err);
       var resultsEl = document.getElementById('searchResults');
       if (resultsEl && isFileProtocol()) {
-        resultsEl.innerHTML = '<p class="search-empty">Búsqueda necesita un servidor web local: ejecuta <code>python -m http.server</code> en esta carpeta y, luego, abre: http://localhost:8000/.</p>';
+        resultsEl.innerHTML = '<p class="search-empty">Búsqueda necesita un servidor web local: ejecuta <code>python -m http.server 8000</code> en esta carpeta y, luego, abre: http://localhost:8000/.</p>';
       }
     });
 
@@ -1738,6 +1842,10 @@
 
     exitContentThen(function () {
       stopFooterMarquee();
+
+      _applyContentEditable(false);
+      _applyOutlines(false);
+
       document.documentElement.classList.remove('is-template-view');
 
       swapContentWithTransition(function () {

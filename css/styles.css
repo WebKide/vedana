@@ -259,6 +259,7 @@ header#site-header {
   position: relative;
 
   display: grid;
+  box-shadow: 0 8px 12px var(--shadow-dark);
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   padding: 8px 14px;
@@ -792,6 +793,206 @@ html.is-template-view #fontIncBtn {
   display: flex;
 }
 
+/* --------------------------------------------------------------------------
+   Template developer controls
+   -------------------------------------------------------------------------- */
+
+.footer-dev-controls {
+  display: none;
+  grid-column: 1 / -1;
+
+  width: 60%;
+  margin: 12px auto 0 auto;
+  box-sizing: border-box;
+
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+html.is-template-view .footer-dev-controls {
+  display: flex;
+}
+
+.footer-dev-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--violet);
+  flex-shrink: 0;
+}
+
+.footer-dev-icon svg {
+  display: block;
+  width: 38px;
+  height: 38px;
+  fill: currentColor;
+}
+
+@media (max-width: 600px) {
+  .footer-dev-controls {
+    flex-direction: column;
+  }
+
+  .footer-dev-icon {
+    order: 3;
+  }
+
+  .footer-author {
+    align-items: flex-start;
+  }
+
+  .footer-author-img {
+    margin-top: 6px;
+    width: 40px;
+    height: 40px;
+    align-self: flex-start;
+  }
+
+  .footer-author-heading {
+    font-size: 0.85rem;
+  }
+
+  .footer-author-body {
+    font-size: 0.75rem;
+  }
+}
+
+.footer-dev-btn {
+  width: auto;
+  min-width: 32px;
+  padding: 0 7px;
+
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
+}
+
+.footer-dev-brand {
+  margin-left: 4px;
+}
+
+
+.footer-author {
+  display: none;
+
+  grid-column: 1 / -1;
+
+  width: 60%;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px 14px;
+
+  background-color: var(--shadow-dark);
+
+  border: none;
+  border-radius: 8px;
+}
+
+html.is-template-view .footer-author {
+  display: flex;
+}
+
+.footer-author-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.footer-author-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+.footer-author-heading {
+  margin: 0;
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.footer-author-body {
+  padding-bottom: 6px;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* ==========================================================================
+   GEEK STATS (reuses .footer-author shell, overrides layout)
+   ========================================================================== */
+
+.footer-author.geek-stats {
+  display: none;  /* keep the same show/hide contract */
+  flex-direction: column;  /* stack title + text vertically */
+  align-items: stretch;  /* full-width children */
+  gap: 8px;
+  padding: 14px 18px;
+  background-color: var(--shadow-dark);
+  border-radius: 8px;
+}
+
+html.is-template-view .footer-author.geek-stats {
+  display: flex;
+  margin: 24px auto;
+}
+
+.geek-stats .footer-author-title {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--accent-bg);
+  color: var(--violet);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: capitalize;
+  letter-spacing: 0.03em;
+}
+
+.geek-stats .footer-author-text {
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  text-align: left;
+}
+
+/* Optional: if you ever wrap the dynamic values in <span class="stat-val">…</span> */
+.geek-stats .stat-val {
+  color: var(--peach);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .footer-author.geek-stats {
+    width: 92%;
+    padding: 12px 14px;
+  }
+
+  .geek-stats .footer-author-title {
+    font-size: 0.85rem;
+  }
+
+  .geek-stats .footer-author-text {
+    font-size: 0.78rem;
+    line-height: 1.65;
+  }
+}
 
 /* ==========================================================================
    FOOTER
@@ -807,7 +1008,6 @@ footer {
 
   background-color: var(--panel);
   color: var(--accent-green);
-  border-top: 2px solid var(--panel-2);
   margin-top: 0;
   padding: 10px 20px;
 
@@ -827,28 +1027,6 @@ html.is-template-view footer {
   padding-bottom: 30px;
 }
 
-html.is-template-view footer::after {
-  content: "";
-  display: block;
-  grid-column: 1 / -1;
-
-  width: 38px;
-  height: 38px;
-  margin: 12px auto 0;
-
-  background-color: var(--violet);
-
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.6 12.3c0-1.6 1.3-3 2.9-3 .9 0 1.7.4 2.3 1.1-.9-6.1-6.6-10.3-12.7-9.3-4.8.7-8.6 4.5-9.3 9.3 1.1-1.2 3-1.4 4.2-.3s1.4 2.9.3 4.2c-.6.7-1.4 1.1-2.3 1-.8 0-1.6-.3-2.1-.9 1.3 6 7.3 9.8 13.3 8.4 4.2-.9 7.5-4.2 8.4-8.4-.5.6-1.3.9-2.1.9-1.5 0-2.9-1.3-2.9-3m-3.5-.5c-.1 1-.8 1.8-1.7 2 1 .2 1.7 1.1 1.7 2.1s-1.6 4.2-2 5.1v.1c-.1 0-.1 0-.2-.1-.4-.9-2-4.1-2-5.1s.7-1.9 1.7-2.1c-.9-.2-1.6-1-1.7-2V3.1l1-.2v8.7c.1.7.7 1.2 1.4 1.1.6-.1.9-.5 1-1.1V2.9l1 .2z"/></svg>');
-  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.6 12.3c0-1.6 1.3-3 2.9-3 .9 0 1.7.4 2.3 1.1-.9-6.1-6.6-10.3-12.7-9.3-4.8.7-8.6 4.5-9.3 9.3 1.1-1.2 3-1.4 4.2-.3s1.4 2.9.3 4.2c-.6.7-1.4 1.4-2.3 1-.8 0-1.6-.3-2.1-.9 1.3 6 7.3 9.8 13.3 8.4 4.2-.9 7.5-4.2 8.4-8.4-.5.6-1.3.9-2.1.9-1.5 0-2.9-1.3-2.9-3m-3.5-.5c-.1 1-.8 1.8-1.7 2 1 .2 1.7 1.1 1.7 2.1s-1.6 4.2-2 5.1v.1c-.1 0-.1 0-.2-.1-.4-.9-2-4.1-2-5.1s.7-1.9 1.7-2.1c-.9-.2-1.6-1-1.7-2V3.1l1-.2v8.7c.1.7.7 1.2 1.4 1.1.6-.1.9-.5 1-1.1V2.9l1 .2z"/></svg>');
-
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-}
-
 footer nav {
   font-size: 0.9rem;
   line-height: 1.8;
@@ -861,6 +1039,11 @@ footer nav.left {
 footer nav.right {
   text-align: left;
   color: var(--muted);
+}
+
+html.is-template-view footer nav.left,
+html.is-template-view footer nav.right {
+  display: none;
 }
 
 /* ---- Two-state footer text: home copyright line vs. template-view ticker ---- */
@@ -1398,6 +1581,17 @@ html.is-template-view .footer-home-text {
   text-shadow:none !important;
 }
 
+#content verse verse-ref {
+  display: block;
+  text-align: right;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  font-style: normal;
+  color: var(--accent-green);
+  text-shadow: none;
+}
+
 @media (max-width: 520px) {
   #content verse {
     max-width: 95%;
@@ -1425,13 +1619,23 @@ html.is-template-view .footer-home-text {
 #content blockquote b,
 #content blockquote strong {
   font-style: normal;
-  color: var(--cyan);
+  color: var(--muted);
 }
 
 #content blockquote i,
 #content blockquote em {
   font-style: italic;
   color: var(--white);
+}
+
+#content blockquote blockquote-ref {
+  display: block;
+  text-align: right;
+  margin-top: 8px;
+  font-size: 0.85em;
+  font-style: normal;
+  color: var(--muted);
+  text-shadow: none;
 }
 
 #content h1, #content h2,
@@ -1723,6 +1927,7 @@ html.is-template-view .footer-home-text {
   }
 
   #top-nav {
+    box-shadow: 0 2px 6px var(--shadow-dark);
     padding: 6px 8px;
     gap: 4px;
   }
