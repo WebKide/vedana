@@ -814,6 +814,18 @@ html.is-template-view .footer-dev-controls {
   display: flex;
 }
 
+/* Mobile Footer Author */
+@media (max-width: 520px) {
+  html.is-template-view .footer-dev-controls {
+    width: 100%;
+    margin: 0;
+  }
+
+  html.is-template-view .footer-author {
+    width: 95%;
+  }
+}
+
 .footer-dev-icon {
   display: flex;
   align-items: center;
@@ -830,19 +842,12 @@ html.is-template-view .footer-dev-controls {
 }
 
 @media (max-width: 600px) {
-  .footer-dev-controls {
-    flex-direction: column;
-  }
-
-  .footer-dev-icon {
-    order: 3;
-  }
-
   .footer-author {
     align-items: flex-start;
   }
 
   .footer-author-img {
+    border: 2px solid var(--accent-green) !important;
     margin-top: 6px;
     width: 40px;
     height: 40px;
@@ -897,6 +902,7 @@ html.is-template-view .footer-author {
 }
 
 .footer-author-img {
+  border: 2px solid var(--neon-cyan);
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -2053,6 +2059,35 @@ html.is-template-view .footer-home-text {
   line-height: inherit;
 
   white-space: inherit;
+}
+
+/* ---- Copy-to-clipboard button for code blocks ---- */
+
+#content pre {
+  position: relative; /* anchors the top-right copy button */
+}
+
+#content pre .pre-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  width: auto;
+  height: auto;
+  padding: 4px 10px;
+
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#content pre:hover .pre-copy-btn,
+#content pre .pre-copy-btn:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* ── DevToolz outline lines

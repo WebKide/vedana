@@ -443,6 +443,15 @@
     return !!node && HEADING_TAGS.indexOf(node.tagName) !== -1;
   }
 
+  // Marks a top-level #content element (e.g. the Geek Stats block) that
+  // must never be swept into a heading's collapsible accordion body — it
+  // stays a direct sibling of #content, always visible regardless of
+  // whether the last section is expanded or collapsed.
+  function isAccordionBoundary(node) {
+    return !!node && node.nodeType === Node.ELEMENT_NODE &&
+      node.classList.contains('accordion-stop');
+  }
+
   function hasRealContent(el) {
     return Array.prototype.some.call(el.childNodes, function (node) {
       return node.nodeType !== Node.TEXT_NODE || node.textContent.trim() !== '';
@@ -465,6 +474,50 @@
     return chevron;
   }
 
+  // ---------------------------------------------------------------
+  // Copy-to-clipboard button for <pre><code> blocks
+  //
+  // One button per <pre>, top-right, revealed on hover via CSS
+  // (#content pre .pre-copy-btn). Re-run alongside initAccordions()
+  // for the same reason: swapping #content's innerHTML destroys and
+  // recreates every element inside it.
+  // ---------------------------------------------------------------
+
+  function initCodeCopyButtons(root) {
+    if (!root) return;
+
+    var blocks = root.querySelectorAll('pre');
+
+    Array.prototype.forEach.call(blocks, function (pre) {
+      if (pre.querySelector('.pre-copy-btn')) return; // already wired up
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'font-btn pre-copy-btn';
+      btn.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" ' +
+          'viewBox="0 0 24 24" ' +
+          'width="18" height="18" ' +
+          'fill="currentColor" ' +
+          'focusable="false" ' +
+          'aria-hidden="true">' +
+            '<path d="M9 18c-.6 0-1-.2-1.4-.6S7 16.5 7 16V4c0-.5.2-1 .6-1.4S8.4 2 9 2h9c.6 0 1 .2 1.4.6s.6.8.6 1.4v12c0 .5-.2 1-.6 1.4s-.8.6-1.4.6zm0-2h9V4H9zm-4 6c-.5 0-1-.2-1.4-.6S3 20.5 3 20V6h2v14h11v2zm4-6V4z"/>' +
+          '</svg>';
+      btn.setAttribute('aria-label', 'Copiar código');
+
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code') || pre;
+        var text = code.innerText;  // var text = code.textContent;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text);
+        }
+      });
+
+      pre.appendChild(btn);
+    });
+  }
+
   function initAccordions(root) {
     if (!root) return;
 
@@ -477,7 +530,7 @@
       inner.className = 'accordion-body-inner';
 
       var node = heading.nextSibling;
-      while (node && !isHeading(node)) {
+      while (node && !isHeading(node) && !isAccordionBoundary(node)) {
         var next = node.nextSibling;
         inner.appendChild(node);
         node = next;
@@ -503,6 +556,8 @@
 
       heading.insertAdjacentElement('afterend', body);
     });
+
+    initCodeCopyButtons(root);
   }
 
   function toggleAccordionSection(heading) {
@@ -1173,10 +1228,7 @@
       toggleAccordionSection(heading);
     });
 
-    // OPEN button inside a search-result group. Bound once here (rather
-    // than re-bound in bindWelcomeSearch) since #content's innerHTML gets
-    // replaced wholesale on every nav, but the #content node itself never
-    // does.
+    // OPEN button inside a search-result group.
     contentEl.addEventListener('click', function (e) {
       var openBtn = e.target.closest('.search-group-open-btn');
       if (!openBtn) return;
