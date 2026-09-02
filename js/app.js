@@ -1326,6 +1326,8 @@
           contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
           if (navTitleEl) navTitleEl.textContent = title || slug;
           if (backBtn) backBtn.style.display = '';
+
+          initFooterMarquee();
         });
       });
   }
