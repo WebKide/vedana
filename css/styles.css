@@ -2005,6 +2005,7 @@ html.is-template-view .footer-home-text {
 
 #content pre {
   display: block;
+  position: relative; /* anchors the copy/view button toolbar */
 
   width: 100%;
   max-width: 100%;
@@ -2061,33 +2062,215 @@ html.is-template-view .footer-home-text {
   white-space: inherit;
 }
 
+/* Desktop-only cursor hints — hover+fine-pointer excludes touch, so
+   nothing here applies on mobile. */
+@media (hover: hover) and (pointer: fine) {
+
+  #content pre {
+    cursor: grab;
+  }
+
+  #content pre:active {
+    cursor: grabbing;
+  }
+
+  /* Toggled for the duration of a drag by the pointerdown/pointermove
+     handlers in app.js. */
+  #content pre.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+
+  /* contenteditable is toggled on #content itself by
+     _applyContentEditable() in app.js — this wins over the grab
+     cursor above via higher specificity (#content[contenteditable] pre
+     vs #content pre), no !important needed. */
+  #content[contenteditable] pre {
+    cursor: text;
+  }
+
+  #content[contenteditable] pre:active {
+    cursor: text;
+  }
+}
+
 /* ---- Copy-to-clipboard button for code blocks ---- */
 
 #content pre {
   position: relative; /* anchors the top-right copy button */
 }
 
-#content pre .pre-copy-btn {
+/* ==========================================================================
+   CODE BLOCK TOOLBAR (copy + view buttons, top-right of each <pre>)
+   ========================================================================== */
+
+.pre-toolbar {
   position: absolute;
   top: 8px;
   right: 8px;
-
-  width: auto;
-  height: auto;
-  padding: 4px 10px;
-
-  font-size: 0.7rem;
-  letter-spacing: 0.03em;
-
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
 }
 
-#content pre:hover .pre-copy-btn,
-#content pre .pre-copy-btn:focus-visible {
+.pre-copy-btn,
+.pre-view-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  opacity: 0.55;
+  background: var(--panel-2);
+  border-color: var(--border-light);
+}
+
+.pre-copy-btn:hover,
+.pre-view-btn:hover,
+.pre-copy-btn:focus-visible,
+.pre-view-btn:focus-visible {
   opacity: 1;
-  pointer-events: auto;
+  background: var(--panel);
+  border-color: var(--white);
+  color: var(--white);
+  outline: none;
+}
+
+/* ==========================================================================
+   CODE LIGHTBOX
+   ========================================================================== */
+
+.code-lightbox {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 950; /* below header#site-header (999) — opens behind the top-nav */
+}
+
+.code-lightbox.is-open {
+  display: block;
+}
+
+html.code-lightbox-active,
+html.code-lightbox-active body {
+  overflow: hidden;
+}
+
+.code-lightbox-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+
+.code-lightbox-panel {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  width: min(96vw, 1200px);
+  height: calc(100vh - 100px);
+  margin: 68px auto 20px;
+
+  background: var(--panel-2);
+  border: 1px solid var(--border-light-strong);
+  border-radius: 10px;
+  box-shadow: 0 12px 35px var(--shadow-dark);
+
+  overflow: hidden;
+}
+
+.code-lightbox-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+
+  padding: 8px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--panel);
+}
+
+.code-lightbox-copy-btn,
+.code-lightbox-edit-btn {
+  width: 32px;
+  height: 32px;
+}
+
+.code-lightbox-close {
+  width: 32px;
+  height: 32px;
+
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  background: none;
+  color: var(--accent-green);
+
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.code-lightbox-close:hover,
+.code-lightbox-close:focus-visible {
+  background: var(--overlay-light);
+  color: var(--white);
+  border-color: var(--white);
+  outline: none;
+}
+
+.code-lightbox-body {
+  flex: 1 1 auto;
+  overflow: hidden; /* clipped by default — panned via pointer drag, not scrolled */
+  padding: 16px;
+  user-select: none;
+}
+
+.code-lightbox-body:not(.is-edit-mode) {
+  touch-action: none; /* let our pointer handlers drive panning instead of the browser */
+}
+
+.code-lightbox-body.is-edit-mode {
+  overflow: scroll; /* both axes always visible — a navigation guide at any font size */
+  user-select: text;
+  cursor: text;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .code-lightbox-body:not(.is-edit-mode) {
+    cursor: grab;
+  }
+
+  .code-lightbox-body.is-dragging {
+    cursor: grabbing;
+  }
+}
+
+.code-lightbox-body pre {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  white-space: pre;
+}
+
+.code-lightbox-body code {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  white-space: inherit;
+}
+
+@media (max-width: 600px) {
+  .code-lightbox-panel {
+    width: 100vw;
+    height: calc(100vh - 76px);
+    margin: 58px auto 18px;
+    border-radius: 0;
+  }
 }
 
 /* ── DevToolz outline lines

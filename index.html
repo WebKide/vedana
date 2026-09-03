@@ -80,7 +80,6 @@
             <!-- Template links start here -->
             <li role="none"><a href="#" data-slug="baladeva-tattva" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Baladeva Tattva</a></li>
             <li role="none"><a href="#" data-slug="janmastami" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Janmāṣṭamī</a></li>
-            <li role="none"><a href="#" data-slug="wargame-assessment" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">wargame assessment</a></li>
             <!-- Template links end here -->
           </ul>
         </div>
@@ -175,6 +174,70 @@
   </div>
 
   <!-- ================================================================
+       CODE LIGHTBOX
+       Persistent: intentionally outside #content because templates
+       replace #content.innerHTML. Opened by the "view" button appended
+       to each <pre> block (see initCodeCopyButtons in js/app.js).
+       z-index sits below header#site-header (999) so it opens behind
+       the top-nav, but above everything else.
+       ================================================================ -->
+
+  <div id="codeLightbox" class="code-lightbox" aria-hidden="true">
+
+    <div id="codeLightboxOverlay" class="code-lightbox-overlay"></div>
+
+    <div class="code-lightbox-panel" role="dialog" aria-modal="true" aria-label="Código ampliado">
+
+      <div class="code-lightbox-toolbar">
+
+        <button
+          id="codeLightboxCopy"
+          class="font-btn code-lightbox-copy-btn"
+          type="button"
+          aria-label="Copiar código">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               width="18" height="18"
+               fill="currentColor"
+               focusable="false"
+               aria-hidden="true">
+            <path d="M9 18c-.6 0-1-.2-1.4-.6S7 16.5 7 16V4c0-.5.2-1 .6-1.4S8.4 2 9 2h9c.6 0 1 .2 1.4.6s.6.8.6 1.4v12c0 .5-.2 1-.6 1.4s-.8.6-1.4.6zm0-2h9V4H9zm-4 6c-.5 0-1-.2-1.4-.6S3 20.5 3 20V6h2v14h11v2zm4-6V4z"/>
+          </svg>
+        </button>
+
+        <button
+          id="codeLightboxEditToggle"
+          class="font-btn code-lightbox-edit-btn"
+          type="button"
+          aria-label="Alternar modo de edición del código"
+          aria-pressed="false">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               width="18" height="18"
+               fill="currentColor"
+               focusable="false"
+               aria-hidden="true">
+            <path d="M8.6 15.6 5 12l3.6-3.6L10 9.8 7.8 12l2.2 2.2zm6.8 0L14 14.2l2.2-2.2L14 9.8l1.4-1.4L19 12zM5 21c-.5 0-1-.2-1.4-.6S3 19.5 3 19v-4h2v4h4v2zm10 0v-2h4v-4h2v4c0 .5-.2 1-.6 1.4s-.8.6-1.4.6zM3 9V5c0-.5.2-1 .6-1.4S4.5 3 5 3h4v2H5v4zm16 0V5h-4V3h4c.6 0 1 .2 1.4.6s.6.8.6 1.4v4z"/>
+          </svg>
+        </button>
+
+        <button
+          id="codeLightboxClose"
+          class="code-lightbox-close"
+          type="button"
+          aria-label="Cerrar">&times;</button>
+
+      </div>
+
+      <div id="codeLightboxBody" class="code-lightbox-body">
+        <pre id="codeLightboxPre"><code id="codeLightboxCode"></code></pre>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================================================================
        MAIN CONTENT MOUNT POINT
        Templates are fetched from templates/<slug>.html and injected
        here by js/app.js. Its initial content is the welcome view.
@@ -237,12 +300,10 @@
 
     <!-- Template-view footer author card -->
     <div class="footer-author">
-      <img class="footer-author-img" src="img/author_avatar.jpg" alt="@Nitāy Vedana">
+      <img class="footer-author-img" id="footerAuthorImg" src="img/author_avatar.jpg" alt="@Nitāy Vedana">
       <div class="footer-author-text">
         <p class="footer-author-heading">Nitāy Vedana</p>
-        <p class="footer-author-body">
-        Nitāy no es un maestro, ni un mesías, solo un estudiante apacionado que vivió 14 años en India y aprendió a convertir el caos en experiencias, que ahora comparte en castellano.
-        </p>
+        <p class="footer-author-body" id="footerAuthorBio"></p>        
       </div>
     </div>
 

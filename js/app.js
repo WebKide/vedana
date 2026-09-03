@@ -112,6 +112,33 @@
   var templateSearchStatus =
     document.getElementById('templateSearchStatus');
 
+  var codeLightbox =
+    document.getElementById('codeLightbox');
+
+  var codeLightboxOverlay =
+    document.getElementById('codeLightboxOverlay');
+
+  var codeLightboxClose =
+    document.getElementById('codeLightboxClose');
+
+  var codeLightboxCopyBtn =
+    document.getElementById('codeLightboxCopy');
+
+  var codeLightboxCode =
+    document.getElementById('codeLightboxCode');
+
+  var codeLightboxPre =
+    document.getElementById('codeLightboxPre');
+
+  var codeLightboxBody =
+    document.getElementById('codeLightboxBody');
+
+  var codeLightboxEditToggle =
+    document.getElementById('codeLightboxEditToggle');
+
+  var codeLightboxLastFocus = null;
+  var codeLightboxEditMode = false;
+
   var currentTemplateSlug = null;
 
   var templateSearchHits = [];
@@ -123,11 +150,55 @@
    * This is persisted with the existing dbGet/dbSet system, so returning
    * to a presentation can restore its previous query.
    */
-  var templateSearchStates =
-    dbGet('templateSearchStates', {});
+  var templateSearchStates = {};
 
   var WELCOME_HTML = contentEl ? contentEl.innerHTML : '';
   var DEFAULT_TITLE = navTitleEl ? navTitleEl.textContent : 'Presentaciones';
+
+  // ---------------------------------------------------------------
+  // Random footer bio — picked once per page load; .footer-author
+  // lives outside #content, so it's never touched again after this.
+  // ---------------------------------------------------------------
+
+  var FOOTER_BIOS = [
+    'Catorce años después de partir hacia Oriente, Nitāy volvió de India con historias, conocimientos y una cantidad considerable de experiencias. Ahora intenta compartir algunas, sin hacer demasiado ruido.',
+    'Catorce años en India dejan secuelas. En el caso de Nitāy, incluyen curiosidad crónica, gusto por los Vedas y una extraña capacidad para convertir experiencias improbables en historias útiles.',
+    'Catorce años en India produjeron una colección considerable de experiencias, aprendizajes y anécdotas. Nitāy volvió a Latinoamérica y, eventualmente, empezó a ponerlas en castellano.',
+    'Después de 14 años en India, Nitāy regresó a Latinoamérica con historias, herramientas y suficientes experiencias extrañas como para sospechar que el caos no es un problema: es parte de la vida.',
+    'Después de 14 años en India, Nitāy regresó a Latinoamérica. Trajo consigo experiencias, conocimientos y unas cuantas historias que probablemente suenen inventadas, pero no lo son.',
+    'Después de 14 años en India, Nitāy volvió a casa con algo más difícil de empacar que baratijas: preguntas nuevas, sabidurías ancestrales y una peligrosa certeza de que el caos tiene sentido.',
+    'Luego de 14 años en India, Nitāy regresó a Latinoamérica con recuerdos difíciles de resumir y conocimientos casi imposibles de explicar. El resultado fue intentar escribirlos en castellano.',
+    'Nitāy no es un maestro ni un mesías, solo un estudiante apasionado que vivió 14 años en India y aprendió a convertir el caos en experiencias, que ahora comparte en castellano.',
+    'Nitāy pasó 14 años en India entre estudios, trabajo, aventuras y situaciones difíciles de explicar. Volvió a Latinoamérica con algunas cosas que valía la pena traer de vuelta.',
+    'Nitāy pasó 14 años en India explorando asuntos antiguos, extraños y bastante más prácticos de lo que parecen. Al regresar, encontró que algunas de esas cosas merecían ser contadas en castellano.',
+    'Nitāy pasó 14 años en India. Hubo estudios, trabajo, arte, filosofía, problemas, soluciones y otras cosas que no caben en una biografía breve. Por eso decidió escribirlas en este blog.',
+    'Nitāy se fue a India buscando sentido y regresó 14 años después con suficientes historias para convertirlas en ideas, escritos, presentaciones y experiencias para quienes todavía están en casa.',
+    'Nitāy se fue a India por 6 meses y tardó 14 años en volver. Entre una cosa y otra hubo estudios, trabajo, arte, filosofía, aventuras y suficientes historias como para justificar el retraso.',
+    'Nitāy vivió 14 años en India, donde estudió, trabajó y se metió en suficientes situaciones inexplicables como para llenar una enciclopedia. Ahora, en Latinoamérica, decidió compartir algunos capítulos por escrito.',
+    'Tras 14 años en India, Nitāy regresó a Latinoamérica con historias, ideas y un equipaje sospechosamente ligero. Desde entonces intenta convertir el conocimiento védico en algo que se pueda entender.',
+    'Tras 14 años en India, Nitāy volvió a Latinoamérica con más historias que equipaje. Algunas encontraron su lugar en las páginas de este blog; otras todavía están tratando de explicarse solas.'
+  ];
+
+  var footerBioEl = document.getElementById('footerAuthorBio');
+
+  if (footerBioEl && FOOTER_BIOS.length) {
+    var randomBio = FOOTER_BIOS[Math.floor(Math.random() * FOOTER_BIOS.length)];
+    footerBioEl.textContent = randomBio;
+  }
+
+  var AUTHOR_AVATARS = [
+    'img/author_avatar.jpg',
+    'img/author_avy.jpg',
+    'img/author_photo.jpg',
+    'img/author_picture.jpg'
+  ];
+
+  var footerAvatarEl = document.getElementById('footerAuthorImg');
+
+  if (footerAvatarEl && AUTHOR_AVATARS.length) {
+    var randomAvatar = AUTHOR_AVATARS[Math.floor(Math.random() * AUTHOR_AVATARS.length)];
+    footerAvatarEl.src = randomAvatar;
+  }
 
   // ---------------------------------------------------------------
   // Font-size control — scales #content only, persisted locally
@@ -174,10 +245,9 @@
   function _applyContentEditable(enabled) {
 
     if (enabled) {
-      // document.documentElement.setAttribute('contenteditable', '');
-      contentEl.setAttribute('contenteditable', '');
+      contentEl.setAttribute('contenteditable', 'true');
     } else {
-      document.documentElement.removeAttribute('contenteditable');
+      contentEl.removeAttribute('contenteditable');
     }
 
     if (contentEditableBtn) {
@@ -237,7 +307,8 @@
     contentEditableBtn.addEventListener('click', function () {
 
       var enabled =
-        !document.documentElement.hasAttribute('contenteditable');
+        // !document.documentElement.hasAttribute('contenteditable');
+        !contentEl.hasAttribute('contenteditable');
 
       _applyContentEditable(enabled);
     });
@@ -377,6 +448,14 @@
     if (e.key !== 'Escape') return;
 
     if (
+      codeLightbox &&
+      codeLightbox.classList.contains('is-open')
+    ) {
+      closeCodeLightbox();
+      return;
+    }
+
+    if (
       templateSearchModal &&
       templateSearchModal.classList.contains('is-open')
     ) {
@@ -489,12 +568,15 @@
     var blocks = root.querySelectorAll('pre');
 
     Array.prototype.forEach.call(blocks, function (pre) {
-      if (pre.querySelector('.pre-copy-btn')) return; // already wired up
+      if (pre.querySelector('.pre-toolbar')) return; // already wired up
 
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'font-btn pre-copy-btn';
-      btn.innerHTML =
+      var toolbar = document.createElement('div');
+      toolbar.className = 'pre-toolbar';
+
+      var copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'font-btn pre-copy-btn';
+      copyBtn.innerHTML =
           '<svg xmlns="http://www.w3.org/2000/svg" ' +
           'viewBox="0 0 24 24" ' +
           'width="18" height="18" ' +
@@ -503,9 +585,9 @@
           'aria-hidden="true">' +
             '<path d="M9 18c-.6 0-1-.2-1.4-.6S7 16.5 7 16V4c0-.5.2-1 .6-1.4S8.4 2 9 2h9c.6 0 1 .2 1.4.6s.6.8.6 1.4v12c0 .5-.2 1-.6 1.4s-.8.6-1.4.6zm0-2h9V4H9zm-4 6c-.5 0-1-.2-1.4-.6S3 20.5 3 20V6h2v14h11v2zm4-6V4z"/>' +
           '</svg>';
-      btn.setAttribute('aria-label', 'Copiar código');
+      copyBtn.setAttribute('aria-label', 'Copiar código');
 
-      btn.addEventListener('click', function () {
+      copyBtn.addEventListener('click', function () {
         var code = pre.querySelector('code') || pre;
         var text = code.innerText;  // var text = code.textContent;
 
@@ -514,7 +596,27 @@
         }
       });
 
-      pre.appendChild(btn);
+      var viewBtn = document.createElement('button');
+      viewBtn.type = 'button';
+      viewBtn.className = 'font-btn pre-view-btn';
+      viewBtn.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" ' +
+          'viewBox="0 -960 960 960" ' +
+          'width="18" height="18" ' +
+          'fill="currentColor" ' +
+          'focusable="false" ' +
+          'aria-hidden="true">' +
+            '<path d="m480-240 160-160-57-57-103 103-103-103-57 57 160 160ZM377-503l103-103 103 103 57-57-160-160-160 160 57 57ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/>' +
+          '</svg>';
+      viewBtn.setAttribute('aria-label', 'Ampliar código');
+
+      viewBtn.addEventListener('click', function () {
+        openCodeLightbox(pre);
+      });
+
+      toolbar.appendChild(copyBtn);
+      toolbar.appendChild(viewBtn);
+      pre.appendChild(toolbar);
     });
   }
 
@@ -892,8 +994,8 @@
       includeMatches: true,
 
       ignoreLocation: true,
-      distance: 3600,
-      threshold: 0.3,
+      // distance: 3600,
+      threshold: 0.15,
       minMatchCharLength: TEMPLATE_SEARCH_MIN,
 
       keys: ['normalized']
@@ -1102,8 +1204,6 @@
       query: query,
       index: templateSearchIndex
     };
-
-    dbSet('templateSearchStates', templateSearchStates);
   }
 
 
@@ -1197,6 +1297,153 @@
     updateTemplateSearchControls();
   }
 
+
+  // ---------------------------------------------------------------
+  // Code lightbox
+  //
+  // Shows one <pre> block's code at native (unscaled) size — it lives
+  // outside #content, so it's naturally unaffected by the font-size
+  // zoom controls that scale contentEl.style.fontSize.
+  // ---------------------------------------------------------------
+
+  function _applyLightboxEditMode(enabled) {
+    codeLightboxEditMode = enabled;
+
+    if (codeLightboxBody) {
+      codeLightboxBody.classList.toggle('is-edit-mode', enabled);
+    }
+
+    if (codeLightboxPre) {
+      if (enabled) {
+        codeLightboxPre.setAttribute('contenteditable', 'true');
+      } else {
+        codeLightboxPre.removeAttribute('contenteditable');
+      }
+    }
+
+    if (codeLightboxEditToggle) {
+      codeLightboxEditToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      codeLightboxEditToggle.classList.toggle('is-active', enabled);
+    }
+  }
+
+  function openCodeLightbox(pre) {
+    if (!codeLightbox || !codeLightboxCode) return;
+
+    var code = pre.querySelector('code') || pre;
+    codeLightboxCode.textContent = code.innerText;
+
+    _applyLightboxEditMode(false); // always open in pan/grab mode
+
+    if (codeLightboxBody) {
+      codeLightboxBody.scrollLeft = 0;
+      codeLightboxBody.scrollTop = 0;
+    }
+
+    codeLightboxLastFocus = document.activeElement;
+
+    codeLightbox.classList.add('is-open');
+    codeLightbox.setAttribute('aria-hidden', 'false');
+    document.documentElement.classList.add('code-lightbox-active');
+
+    if (codeLightboxClose) codeLightboxClose.focus();
+  }
+
+  function closeCodeLightbox() {
+    if (!codeLightbox) return;
+
+    codeLightbox.classList.remove('is-open');
+    codeLightbox.setAttribute('aria-hidden', 'true');
+    document.documentElement.classList.remove('code-lightbox-active');
+
+    if (codeLightboxCode) codeLightboxCode.textContent = '';
+
+    endCodeLightboxDrag(null, true);
+    _applyLightboxEditMode(false);
+
+    if (codeLightboxLastFocus && typeof codeLightboxLastFocus.focus === 'function') {
+      codeLightboxLastFocus.focus();
+    }
+    codeLightboxLastFocus = null;
+  }
+
+  var codeLightboxDragState = null;
+
+  function isLightboxDragEligible(e) {
+    if (codeLightboxEditMode) return false;
+    if (e.pointerType === 'mouse' && e.button !== 0) return false;
+    return true;
+  }
+
+  function endCodeLightboxDrag(e, force) {
+    if (!codeLightboxDragState) return;
+    if (!force && (!e || e.pointerId !== codeLightboxDragState.pointerId)) return;
+
+    if (codeLightboxBody) codeLightboxBody.classList.remove('is-dragging');
+
+    try {
+      codeLightboxBody.releasePointerCapture(codeLightboxDragState.pointerId);
+    } catch (err) {}
+
+    codeLightboxDragState = null;
+  }
+
+  if (codeLightboxBody) {
+
+    codeLightboxBody.addEventListener('pointerdown', function (e) {
+      if (!isLightboxDragEligible(e)) return;
+      e.preventDefault();
+
+      codeLightboxDragState = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        scrollLeft: codeLightboxBody.scrollLeft,
+        scrollTop: codeLightboxBody.scrollTop
+      };
+
+      codeLightboxBody.setPointerCapture(e.pointerId);
+      codeLightboxBody.classList.add('is-dragging');
+    });
+
+    codeLightboxBody.addEventListener('pointermove', function (e) {
+      if (!codeLightboxDragState || e.pointerId !== codeLightboxDragState.pointerId) return;
+      e.preventDefault();
+
+      var dx = e.clientX - codeLightboxDragState.startX;
+      var dy = e.clientY - codeLightboxDragState.startY;
+
+      codeLightboxBody.scrollLeft = codeLightboxDragState.scrollLeft - dx;
+      codeLightboxBody.scrollTop = codeLightboxDragState.scrollTop - dy;
+    });
+
+    codeLightboxBody.addEventListener('pointerup', endCodeLightboxDrag);
+    codeLightboxBody.addEventListener('pointercancel', endCodeLightboxDrag);
+  }
+
+  if (codeLightboxOverlay) {
+    codeLightboxOverlay.addEventListener('click', closeCodeLightbox);
+  }
+
+  if (codeLightboxClose) {
+    codeLightboxClose.addEventListener('click', closeCodeLightbox);
+  }
+
+  if (codeLightboxEditToggle) {
+    codeLightboxEditToggle.addEventListener('click', function () {
+      _applyLightboxEditMode(!codeLightboxEditMode);
+    });
+  }
+
+  if (codeLightboxCopyBtn) {
+    codeLightboxCopyBtn.addEventListener('click', function () {
+      var text = codeLightboxCode ? codeLightboxCode.textContent : '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      }
+    });
+  }
+
   var accordionClickTimer = null;
   var ACCORDION_CLICK_DELAY = 250; // ms — long enough to catch a dblclick
 
@@ -1243,6 +1490,61 @@
       openedFromSearch = true;
       loadTemplate(slug, entry ? entry.title : slug);
     });
+
+    // Code block drag-to-pan (mouse only — .is-dragging in styles.css
+    // handles the grabbing cursor + selection lock while active; touch
+    // devices get native scrolling and never enter this path).
+    var codeDragState = null;
+
+    function isCodeDragEligible(e) {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return false;
+      if (contentEl.hasAttribute('contenteditable')) return false;
+      return true;
+    }
+
+    function endCodeDrag(e) {
+      if (!codeDragState || e.pointerId !== codeDragState.pointerId) return;
+      codeDragState.pre.classList.remove('is-dragging');
+      try {
+        codeDragState.pre.releasePointerCapture(codeDragState.pointerId);
+      } catch (err) {}
+      codeDragState = null;
+    }
+
+    contentEl.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('.pre-toolbar')) return; // let toolbar buttons handle their own clicks
+
+      var pre = e.target.closest('pre');
+      if (!pre || !isCodeDragEligible(e)) return;
+
+      e.preventDefault(); // stop native text-selection drag from starting
+
+      codeDragState = {
+        pointerId: e.pointerId,
+        pre: pre,
+        startX: e.clientX,
+        startY: e.clientY,
+        scrollLeft: pre.scrollLeft,
+        scrollTop: pre.scrollTop
+      };
+
+      pre.setPointerCapture(e.pointerId);
+      pre.classList.add('is-dragging');
+    });
+
+    contentEl.addEventListener('pointermove', function (e) {
+      if (!codeDragState || e.pointerId !== codeDragState.pointerId) return;
+      e.preventDefault();
+
+      var dx = e.clientX - codeDragState.startX;
+      var dy = e.clientY - codeDragState.startY;
+
+      codeDragState.pre.scrollLeft = codeDragState.scrollLeft - dx;
+      codeDragState.pre.scrollTop = codeDragState.scrollTop - dy;
+    });
+
+    contentEl.addEventListener('pointerup', endCodeDrag);
+    contentEl.addEventListener('pointercancel', endCodeDrag);
   }
 
   var CONTENT_TRANSITION_MS = 300; // keep in sync with #content's CSS transition duration
@@ -1288,6 +1590,7 @@
   function loadTemplate(slug, title) {
     if (!contentEl) return;
 
+    templateSearchStates = {};
     currentTemplateSlug = slug;
 
     stopSlideshow();
@@ -1336,6 +1639,7 @@
     if (!contentEl) return;
 
     exitContentThen(function () {
+      templateSearchStates = {};
       teardownResultsObserver();
       openedFromSearch = false;
       stopFooterMarquee();
@@ -1895,6 +2199,7 @@
     if (!contentEl) return;
 
     exitContentThen(function () {
+      templateSearchStates = {};
       stopFooterMarquee();
 
       _applyContentEditable(false);
