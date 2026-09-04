@@ -139,6 +139,8 @@
   var codeLightboxLastFocus = null;
   var codeLightboxEditMode = false;
 
+  var openGlossTooltip = null;
+
   var currentTemplateSlug = null;
 
   var templateSearchHits = [];
@@ -446,6 +448,11 @@
   document.addEventListener('keydown', function (e) {
 
     if (e.key !== 'Escape') return;
+
+    if (openGlossTooltip) {
+      closeGlossTooltip();
+      return;
+    }
 
     if (
       codeLightbox &&
@@ -897,10 +904,25 @@
       parent.normalize();
     });
 
+    var staleTargets = contentEl.querySelectorAll('.gloss-search-target');
+    Array.prototype.forEach.call(staleTargets, function (t) {
+      t.classList.remove('gloss-search-target');
+    });
+
     templateSearchHits = [];
     templateSearchIndex = -1;
   }
 
+
+  // If a matched text node lives inside a .gloss-tooltip-content span,
+  // the real "hit" should be its trigger word (the only thing actually
+  // visible) rather than the invisible text itself.
+  function findGlossLandingTarget(node) {
+    var tooltipContent = node.closest('.gloss-tooltip-content');
+    if (!tooltipContent) return null;
+    var trigger = tooltipContent.previousElementSibling;
+    return (trigger && trigger.classList.contains('gloss-trigger')) ? trigger : null;
+  }
 
   /*
    * Highlight one or more ranges inside one text node.
@@ -939,10 +961,14 @@
       hit.appendChild(middle);
 
       /*
-       * Store the actual span rather than the original text node.
-       * This makes PREV/NEXT extremely cheap.
+       * Store {el, landingEl} rather than a bare node — landingEl is set
+       * when this hit sits inside a hidden gloss tooltip, so navigating
+       * to it can scroll/flag the visible trigger word instead.
        */
-      templateSearchHits.push(hit);
+      templateSearchHits.push({
+        el: hit,
+        landingEl: findGlossLandingTarget(hit)
+      });
 
       void after;
     });
@@ -1092,9 +1118,9 @@
      */
     templateSearchHits.sort(function (a, b) {
 
-      if (a === b) return 0;
+      if (a.el === b.el) return 0;
 
-      var position = a.compareDocumentPosition(b);
+      var position = a.el.compareDocumentPosition(b.el);
 
       if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
       if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
@@ -1117,12 +1143,15 @@
    */
   function setActiveTemplateSearchHit() {
 
-    templateSearchHits.forEach(function (hit, index) {
+    templateSearchHits.forEach(function (entry, index) {
 
-      hit.classList.toggle(
-        'template-search-hit-active',
-        index === templateSearchIndex
-      );
+      var isActive = index === templateSearchIndex;
+
+      entry.el.classList.toggle('template-search-hit-active', isActive);
+
+      if (entry.landingEl) {
+        entry.landingEl.classList.toggle('gloss-search-target', isActive);
+      }
     });
 
     if (templateSearchIndex < 0 ||
@@ -1131,8 +1160,9 @@
     }
 
     var active = templateSearchHits[templateSearchIndex];
+    var scrollTarget = active.landingEl || active.el;
 
-    active.scrollIntoView({
+    scrollTarget.scrollIntoView({
       behavior: 'smooth',
       block: 'center',
       inline: 'nearest'
@@ -1256,7 +1286,7 @@
 
     if (templateSearchModal) {
       templateSearchModal.classList.add('is-open');
-      templateSearchModal.setAttribute('aria-hidden', 'false');
+      templateSearchModal.inert = false;
     }
 
     restoreTemplateSearchState();
@@ -1291,7 +1321,7 @@
 
     if (templateSearchModal) {
       templateSearchModal.classList.remove('is-open');
-      templateSearchModal.setAttribute('aria-hidden', 'true');
+      templateSearchModal.inert = true;
     }
 
     updateTemplateSearchControls();
@@ -1343,7 +1373,7 @@
     codeLightboxLastFocus = document.activeElement;
 
     codeLightbox.classList.add('is-open');
-    codeLightbox.setAttribute('aria-hidden', 'false');
+    codeLightbox.inert = false;
     document.documentElement.classList.add('code-lightbox-active');
 
     if (codeLightboxClose) codeLightboxClose.focus();
@@ -1353,7 +1383,7 @@
     if (!codeLightbox) return;
 
     codeLightbox.classList.remove('is-open');
-    codeLightbox.setAttribute('aria-hidden', 'true');
+    codeLightbox.inert = true;
     document.documentElement.classList.remove('code-lightbox-active');
 
     if (codeLightboxCode) codeLightboxCode.textContent = '';
@@ -1444,6 +1474,77 @@
     });
   }
 
+  // ---------------------------------------------------------------
+  // Word-level glossary tooltips ( word((definition)) )
+  //
+  // Content lives inside #content, right next to its trigger word, so
+  // it's part of the same DOM the template search already walks — a
+  // match inside a hidden tooltip just lands the search on the trigger
+  // word instead of trying to scroll to invisible text (see
+  // findGlossLandingTarget / highlightTextNode / setActiveTemplateSearchHit
+  // below). Only one tooltip is open at a time.
+  // ---------------------------------------------------------------
+
+  function closeGlossTooltip() {
+    if (!openGlossTooltip) return;
+    openGlossTooltip.classList.remove('is-open', 'is-below');
+    openGlossTooltip.inert = true;
+    openGlossTooltip = null;
+  }
+
+  function positionGlossTooltip(tooltip, trigger) {
+    var rect = trigger.getBoundingClientRect();
+    var margin = 10;
+
+    var tw = tooltip.offsetWidth;
+    var th = tooltip.offsetHeight;
+
+    var below = rect.top < (th + margin + 12);
+
+    var left = rect.left + (rect.width / 2) - (tw / 2);
+    left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+
+    var top = below ? (rect.bottom + 12) : (rect.top - th - 12);
+    top = Math.max(margin, top);
+
+    tooltip.classList.toggle('is-below', below);
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+    tooltip.style.setProperty(
+      '--gloss-arrow-left',
+      (rect.left + rect.width / 2 - left) + 'px'
+    );
+  }
+
+  function openGlossTooltipFor(trigger) {
+    var tooltip = trigger.nextElementSibling;
+    if (!tooltip || !tooltip.classList.contains('gloss-tooltip-content')) return;
+
+    if (openGlossTooltip === tooltip) {
+      closeGlossTooltip();
+      return;
+    }
+
+    closeGlossTooltip();
+
+    // Measure/position while still visibility:hidden (it still has real
+    // layout, unlike display:none) so there's no flash at the wrong spot.
+    positionGlossTooltip(tooltip, trigger);
+
+    tooltip.classList.add('is-open');
+    tooltip.inert = false;
+    openGlossTooltip = tooltip;
+  }
+
+  window.addEventListener('scroll', closeGlossTooltip, { passive: true, capture: true });
+  window.addEventListener('resize', closeGlossTooltip);
+
+  document.addEventListener('click', function (e) {
+    if (!openGlossTooltip) return;
+    if (e.target.closest('.gloss-tooltip-content') || e.target.closest('.gloss-trigger')) return;
+    closeGlossTooltip();
+  });
+
   var accordionClickTimer = null;
   var ACCORDION_CLICK_DELAY = 250; // ms — long enough to catch a dblclick
 
@@ -1473,6 +1574,21 @@
       if (!heading) return;
       e.preventDefault();
       toggleAccordionSection(heading);
+    });
+
+    contentEl.addEventListener('click', function (e) {
+      var trigger = e.target.closest('.gloss-trigger');
+      if (!trigger) return;
+      e.stopPropagation();
+      openGlossTooltipFor(trigger);
+    });
+
+    contentEl.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var trigger = e.target.closest('.gloss-trigger');
+      if (!trigger) return;
+      e.preventDefault();
+      openGlossTooltipFor(trigger);
     });
 
     // OPEN button inside a search-result group.
@@ -1593,6 +1709,7 @@
     templateSearchStates = {};
     currentTemplateSlug = slug;
 
+    closeGlossTooltip();
     stopSlideshow();
     teardownResultsObserver();
     document.documentElement.classList.add('is-template-view');
@@ -1640,6 +1757,7 @@
 
     exitContentThen(function () {
       templateSearchStates = {};
+      closeGlossTooltip();
       teardownResultsObserver();
       openedFromSearch = false;
       stopFooterMarquee();
@@ -2200,6 +2318,7 @@
 
     exitContentThen(function () {
       templateSearchStates = {};
+      closeGlossTooltip();
       stopFooterMarquee();
 
       _applyContentEditable(false);

@@ -2273,5 +2273,114 @@ html.code-lightbox-active body {
   }
 }
 
+/* ==========================================================================
+   GLOSSARY TOOLTIPS  ( word((definition)) )
+   ========================================================================== */
+
+#content .gloss-trigger {
+  cursor: pointer;
+  border-radius: 3px;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+#content .gloss-trigger:hover,
+#content .gloss-trigger:focus-visible {
+  text-decoration-color: var(--accent-green);
+  outline: none;
+}
+
+#content .gloss-trigger.gloss-search-target {
+  box-shadow:
+    0 0 0 2px var(--white),
+    0 0 12px 3px var(--accent);
+}
+
+.gloss-tooltip-content {
+  position: fixed;
+  z-index: 960; /* above regular content, below header#site-header (999) */
+
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 10px 14px;
+  box-sizing: border-box;
+
+  background: var(--lime);
+  color: var(--noir);
+  border: 1.5px solid var(--noir);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--shadow-dark);
+
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: left;
+
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+
+.gloss-tooltip-content.is-open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.2s ease, visibility 0s linear 0s;
+}
+
+.gloss-tooltip-content img {
+  display: block;
+  max-width: 50%;
+  max-height: 35vh; /* literal 35% needs an explicitly-sized ancestor — vh is the practical equivalent */
+  margin: 0 auto;
+  border-radius: 6px;
+}
+
+.gloss-tooltip-content figure.tooltip-image {
+  margin: 0;
+  text-align: center;
+}
+
+.gloss-tooltip-content figcaption {
+  font-size: 0.8em;
+  font-style: italic;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+.gloss-tooltip-content a {
+  color: var(--noir);
+  text-decoration: underline;
+}
+
+/* Arrow — a rotated square, two edges bordered to read as a triangle.
+   --gloss-arrow-left is set inline by app.js so it always points at the
+   trigger word's true center, even when the box itself gets clamped to
+   stay on-screen. */
+.gloss-tooltip-content::after {
+  content: "";
+  position: absolute;
+  left: var(--gloss-arrow-left, 50%);
+  width: 12px;
+  height: 12px;
+  background: var(--lime);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.gloss-tooltip-content:not(.is-below)::after {
+  bottom: -6px;
+  border-right: 1.5px solid var(--noir);
+  border-bottom: 1.5px solid var(--noir);
+}
+
+.gloss-tooltip-content.is-below::after {
+  top: -6px;
+  border-left: 1.5px solid var(--noir);
+  border-top: 1.5px solid var(--noir);
+}
+
 /* ── DevToolz outline lines
 * { border: 1px solid var(--accent-bg); } ── */
