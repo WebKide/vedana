@@ -2306,11 +2306,11 @@ html.code-lightbox-active body {
   padding: 10px 14px;
   box-sizing: border-box;
 
-  background: var(--lime);
-  color: var(--noir);
-  border: 1.5px solid var(--noir);
+  background: var(--bg);
+  color: var(--white);
+  border: 2px solid var(--accent-green);
   border-radius: 8px;
-  box-shadow: 0 8px 24px var(--shadow-dark);
+  box-shadow: 0 8px 24px var(--shade-30);
 
   font-family: var(--font-sans);
   font-size: 0.85rem;
@@ -2352,7 +2352,7 @@ html.code-lightbox-active body {
 }
 
 .gloss-tooltip-content a {
-  color: var(--noir);
+  color: var(--text);
   text-decoration: underline;
 }
 
@@ -2366,20 +2366,20 @@ html.code-lightbox-active body {
   left: var(--gloss-arrow-left, 50%);
   width: 12px;
   height: 12px;
-  background: var(--lime);
+  background: var(--bg);
   transform: translateX(-50%) rotate(45deg);
 }
 
 .gloss-tooltip-content:not(.is-below)::after {
-  bottom: -6px;
-  border-right: 1.5px solid var(--noir);
-  border-bottom: 1.5px solid var(--noir);
+  bottom: -7.30px;
+  border-right: 2px solid var(--accent-green);
+  border-bottom: 2px solid var(--accent-green);
 }
 
 .gloss-tooltip-content.is-below::after {
-  top: -6px;
-  border-left: 1.5px solid var(--noir);
-  border-top: 1.5px solid var(--noir);
+  top: -7.30px;
+  border-left: 2px solid var(--accent-green);
+  border-top: 2px solid var(--accent-green);
 }
 
 /* ── DevToolz outline lines
