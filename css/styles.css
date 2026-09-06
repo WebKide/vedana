@@ -100,8 +100,8 @@
   /* Shadows */
   --overlay-dark: rgba(0, 0, 0, 0.20); /* Black 20% */
   --shadow-dark:  rgba(0, 0, 0, 0.40); /* Black 40% */
-  --shade-10:     rgba(0, 0, 0, 0.45); /* Black 10% — search group shade A */
-  --shade-30:     rgba(0, 0, 0, 0.95); /* Black 30% — search group shade B */
+  --shade-10:     rgba(0, 0, 0, 0.35); /* Black 10% — search group shade A */
+  --shade-30:     rgba(0, 0, 0, 0.65); /* Black 30% — search group shade B */
 
   /* Orange */
   --accent-bg:     rgba(251, 109, 33, 0.08); /* Vivid Orange 8% */
@@ -1269,7 +1269,7 @@ html.is-template-view .footer-home-text {
 }
 
 .search-group {
-  border: 1px solid var(--muted);
+  border: 2px solid var(--page-surround);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 8px;
@@ -1282,7 +1282,7 @@ html.is-template-view .footer-home-text {
 
 .search-group:hover,
 .search-group:focus-within {
-  border-color: var(--white);
+  border: 2px solid var(--border-light-strong);
   box-shadow: 0 8px 24px var(--shadow-dark);
 }
 
@@ -2189,11 +2189,21 @@ html.code-lightbox-active body {
 
   padding: 8px;
   border-bottom: 1px solid var(--border-light);
-  background: var(--panel);
+  background: var(--shadow-dark);
+}
+
+.code-lightbox-title {
+  margin-right: auto;
+  color: var(--peach);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .code-lightbox-copy-btn,
-.code-lightbox-edit-btn {
+.code-lightbox-edit-btn,
+.code-lightbox-font-btn {
   width: 32px;
   height: 32px;
 }
@@ -2253,13 +2263,15 @@ html.code-lightbox-active body {
   border: 0;
   box-shadow: none;
   background: transparent;
+  line-height: 1.18;
+  font-size: 0.9em;
   white-space: pre;
 }
 
 .code-lightbox-body code {
   background: transparent;
   border: 0;
-  color: inherit;
+  color: var(--text);
   font: inherit;
   white-space: inherit;
 }
@@ -2339,12 +2351,14 @@ html.code-lightbox-active body {
   border-radius: 6px;
 }
 
-.gloss-tooltip-content figure.tooltip-image {
+.gloss-tooltip-content .tooltip-image {
+  display: block; /* span, not figure — figure/figcaption aren't allowed inside <p>, see notes */
   margin: 0;
   text-align: center;
 }
 
-.gloss-tooltip-content figcaption {
+.gloss-tooltip-content .tooltip-caption {
+  display: block;
   font-size: 0.8em;
   font-style: italic;
   margin-top: 4px;
@@ -2380,6 +2394,34 @@ html.code-lightbox-active body {
   top: -7.30px;
   border-left: 2px solid var(--accent-green);
   border-top: 2px solid var(--accent-green);
+}
+
+/* ===============================================================
+   Scrollbars
+   =============================================================== */
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }
 
 /* ── DevToolz outline lines

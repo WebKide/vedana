@@ -7,6 +7,11 @@
  *   - the always-visible nav (back button, template menu, font-size buttons)
  *   - fetching + injecting template/<slug>.html into #content
  *   - the welcome view’s Fuse-powered search (live from the 3ʳᵈ character)
+ *
+ * Navigation itself is owned by js/router.js (loaded before this file):
+ * every template open/close goes through window.Router.navigateTo()/
+ * goHome() rather than calling loadTemplate()/goHome() directly, and
+ * this file reacts via window.Router.onRouteChange() at the bottom.
  */
 
 (function () {
@@ -72,7 +77,7 @@
 
   // ---------------------------------------------------------------
   // Persistent DOM refs (these nodes are never replaced — only
-  // #content's innerHTML changes, so anything inside #content must be
+  // #content’s innerHTML changes, so anything inside #content must be
   // re-queried after each swap instead of cached up here)
   // ---------------------------------------------------------------
 
@@ -136,30 +141,54 @@
   var codeLightboxEditToggle =
     document.getElementById('codeLightboxEditToggle');
 
+  var codeLightboxFontDecBtn =
+    document.getElementById('codeLightboxFontDecBtn');
+
+  var codeLightboxFontIncBtn =
+    document.getElementById('codeLightboxFontIncBtn');
+
   var codeLightboxLastFocus = null;
   var codeLightboxEditMode = false;
+
+  // In-memory only — never dbGet/dbSet'd — and fully independent of
+  // #content's own `fontSize` var above. Scoped to codeLightboxBody
+  // alone, so it never touches #content's font size. Reset to
+  // FONT_DEFAULT every time openCodeLightbox() runs (see below); the
+  // null here is never read before that reset happens.
+  var codeLightboxFontSize = null;
 
   var openGlossTooltip = null;
 
   var currentTemplateSlug = null;
+
+  var templateRequestId = 0;
+  var templateAbortController = null;
+
+  // Set by a click handler right before calling Router.navigateTo(), so
+  // the router callback can use the exact title already known at the
+  // click site (link text / search-result title) instead of waiting on
+  // searchData. Only used when present — a cold load landing directly
+  // on an existing #slug, or the browser’s native Back/Forward, falls
+  // back to titleForSlug() instead (see below).
+  var pendingNavTitle = null;
 
   var templateSearchHits = [];
   var templateSearchIndex = -1;
 
   /*
    * One search state per template.
-   *
+   *     var templateSearchStates = {};
    * This is persisted with the existing dbGet/dbSet system, so returning
    * to a presentation can restore its previous query.
    */
-  var templateSearchStates = {};
+  var templateSearchState = null;
 
   var WELCOME_HTML = contentEl ? contentEl.innerHTML : '';
   var DEFAULT_TITLE = navTitleEl ? navTitleEl.textContent : 'Presentaciones';
 
   // ---------------------------------------------------------------
   // Random footer bio — picked once per page load; .footer-author
-  // lives outside #content, so it's never touched again after this.
+  // lives outside #content, so it’s never touched again after this.
   // ---------------------------------------------------------------
 
   var FOOTER_BIOS = [
@@ -246,6 +275,8 @@
 
   function _applyContentEditable(enabled) {
 
+    if (!contentEl) return;
+
     if (enabled) {
       contentEl.setAttribute('contenteditable', 'true');
     } else {
@@ -307,6 +338,8 @@
   if (contentEditableBtn) {
 
     contentEditableBtn.addEventListener('click', function () {
+
+      if (!contentEl) return;
 
       var enabled =
         // !document.documentElement.hasAttribute('contenteditable');
@@ -501,11 +534,8 @@
       e.preventDefault();
 
       openedFromSearch = false;
-
-      loadTemplate(
-        link.getAttribute('data-slug'),
-        link.textContent.trim()
-      );
+      pendingNavTitle = link.textContent.trim();
+      window.Router.navigateTo(link.getAttribute('data-slug'));
 
       closeMenu();
     });
@@ -514,7 +544,7 @@
   // ---------------------------------------------------------------
   // Collapsible headings (accordion)
   //
-  // Flat grouping: a heading's "body" is every sibling node that
+  // Flat grouping: a heading’s "body" is every sibling node that
   // follows it up to (not including) the next heading of ANY level.
   // Heading level (h1-h6) only affects how a section looks — it does
   // not create nesting/parent-child collapse behavior.
@@ -530,7 +560,7 @@
   }
 
   // Marks a top-level #content element (e.g. the Geek Stats block) that
-  // must never be swept into a heading's collapsible accordion body — it
+  // must never be swept into a heading’s collapsible accordion body — it
   // stays a direct sibling of #content, always visible regardless of
   // whether the last section is expanded or collapsed.
   function isAccordionBoundary(node) {
@@ -565,7 +595,7 @@
   //
   // One button per <pre>, top-right, revealed on hover via CSS
   // (#content pre .pre-copy-btn). Re-run alongside initAccordions()
-  // for the same reason: swapping #content's innerHTML destroys and
+  // for the same reason: swapping #content’s innerHTML destroys and
   // recreates every element inside it.
   // ---------------------------------------------------------------
 
@@ -599,7 +629,9 @@
         var text = code.innerText;  // var text = code.textContent;
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text);
+          navigator.clipboard.writeText(text).catch(function (err) {
+            console.error('[app] No se pudo copiar el código:', err);
+          });
         }
       });
 
@@ -809,16 +841,13 @@
     var map = [];
 
     var chars = Array.from(String(text || ''));
+    var sourceOffset = 0;
 
-    chars.forEach(function (char, charIndex) {
+    chars.forEach(function (char) {
 
-      var start = 0;
-
-      for (var i = 0; i < charIndex; i++) {
-        start += chars[i].length;
-      }
-
+      var start = sourceOffset;
       var end = start + char.length;
+      sourceOffset = end;
 
       var piece = char
         .replace(/ñ/g, '__ntilde__')
@@ -882,7 +911,7 @@
    * Remove all existing template-search highlights.
    *
    * unwraps the span rather than reconstructing #content, so accordion
-   * state and the user's current scroll position remain untouched.
+   * state and the user’s current scroll position remain untouched.
    */
   function clearTemplateSearchHighlights() {
 
@@ -1230,7 +1259,8 @@
         ? templateSearchInput.value
         : '';
 
-    templateSearchStates[currentTemplateSlug] = {
+    templateSearchState = {
+      slug: currentTemplateSlug,
       query: query,
       index: templateSearchIndex
     };
@@ -1243,7 +1273,10 @@
       return;
     }
 
-    var state = templateSearchStates[currentTemplateSlug];
+    var state =
+      (templateSearchState && templateSearchState.slug === currentTemplateSlug)
+        ? templateSearchState
+        : null;
 
     if (!state || !state.query) {
       templateSearchInput.value = '';
@@ -1331,10 +1364,14 @@
   // ---------------------------------------------------------------
   // Code lightbox
   //
-  // Shows one <pre> block's code at native (unscaled) size — it lives
-  // outside #content, so it's naturally unaffected by the font-size
+  // Shows one <pre> block’s code at native (unscaled) size — it lives
+  // outside #content, so it’s naturally unaffected by the font-size
   // zoom controls that scale contentEl.style.fontSize.
   // ---------------------------------------------------------------
+
+  function applyCodeLightboxFontSize(px) {
+    if (codeLightboxBody) codeLightboxBody.style.fontSize = px + 'px';
+  }
 
   function _applyLightboxEditMode(enabled) {
     codeLightboxEditMode = enabled;
@@ -1365,6 +1402,10 @@
 
     _applyLightboxEditMode(false); // always open in pan/grab mode
 
+    // Ephemeral per-open reset — never persisted, never affects #content.
+    codeLightboxFontSize = FONT_DEFAULT;
+    applyCodeLightboxFontSize(codeLightboxFontSize);
+
     if (codeLightboxBody) {
       codeLightboxBody.scrollLeft = 0;
       codeLightboxBody.scrollTop = 0;
@@ -1390,6 +1431,7 @@
 
     endCodeLightboxDrag(null, true);
     _applyLightboxEditMode(false);
+    if (codeLightboxBody) codeLightboxBody.style.fontSize = '';
 
     if (codeLightboxLastFocus && typeof codeLightboxLastFocus.focus === 'function') {
       codeLightboxLastFocus.focus();
@@ -1469,8 +1511,24 @@
     codeLightboxCopyBtn.addEventListener('click', function () {
       var text = codeLightboxCode ? codeLightboxCode.textContent : '';
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text);
+        navigator.clipboard.writeText(text).catch(function (err) {
+          console.error('[app] No se pudo copiar el código:', err);
+        });
       }
+    });
+  }
+
+  if (codeLightboxFontDecBtn) {
+    codeLightboxFontDecBtn.addEventListener('click', function () {
+      codeLightboxFontSize = Math.max(FONT_MIN, codeLightboxFontSize - FONT_STEP);
+      applyCodeLightboxFontSize(codeLightboxFontSize);
+    });
+  }
+
+  if (codeLightboxFontIncBtn) {
+    codeLightboxFontIncBtn.addEventListener('click', function () {
+      codeLightboxFontSize = Math.min(FONT_MAX, codeLightboxFontSize + FONT_STEP);
+      applyCodeLightboxFontSize(codeLightboxFontSize);
     });
   }
 
@@ -1478,7 +1536,7 @@
   // Word-level glossary tooltips ( word((definition)) )
   //
   // Content lives inside #content, right next to its trigger word, so
-  // it's part of the same DOM the template search already walks — a
+  // it’s part of the same DOM the template search already walks — a
   // match inside a hidden tooltip just lands the search on the trigger
   // word instead of trying to scroll to invisible text (see
   // findGlossLandingTarget / highlightTextNode / setActiveTemplateSearchHit
@@ -1528,7 +1586,7 @@
     closeGlossTooltip();
 
     // Measure/position while still visibility:hidden (it still has real
-    // layout, unlike display:none) so there's no flash at the wrong spot.
+    // layout, unlike display:none) so there’s no flash at the wrong spot.
     positionGlossTooltip(tooltip, trigger);
 
     tooltip.classList.add('is-open');
@@ -1604,7 +1662,8 @@
       }
 
       openedFromSearch = true;
-      loadTemplate(slug, entry ? entry.title : slug);
+      pendingNavTitle = entry ? entry.title : slug;
+      window.Router.navigateTo(slug);
     });
 
     // Code block drag-to-pan (mouse only — .is-dragging in styles.css
@@ -1663,7 +1722,7 @@
     contentEl.addEventListener('pointercancel', endCodeDrag);
   }
 
-  var CONTENT_TRANSITION_MS = 300; // keep in sync with #content's CSS transition duration
+  var CONTENT_TRANSITION_MS = 300; // keep in sync with #content’s CSS transition duration
 
   function swapContentWithTransition(applyFn) {
     if (!contentEl) { applyFn(); return; }
@@ -1682,19 +1741,32 @@
   function exitContentThen(afterExit) {
     if (!contentEl) { afterExit(); return; }
 
+    // templateRequestId is already bumped by every navigation entry
+    // point (loadTemplate/goHome/backToSearchResults) before this runs,
+    // so capturing it here doubles it as a general navigation epoch: if
+    // a second navigation starts (bumping the counter again) before
+    // this exit transition finishes, this call's afterExit() is skipped
+    // instead of clobbering whatever the newer navigation put into
+    // #content. Closes the "no busy/transition lock" gap (P1, High).
+    var expectedRequestId = templateRequestId;
+
     var done = false;
+    var timeoutId = null;
+
     function finish(e) {
       if (e && e.target !== contentEl) return;
       if (done) return;
       done = true;
       contentEl.removeEventListener('transitionend', finish);
+      clearTimeout(timeoutId);
+      if (expectedRequestId !== templateRequestId) return;
       afterExit();
     }
 
     contentEl.addEventListener('transitionend', finish);
     // Fallback in case transitionend never fires (prefers-reduced-motion,
     // a backgrounded tab throttling timers, etc.)
-    setTimeout(finish, CONTENT_TRANSITION_MS + 50);
+    timeoutId = setTimeout(finish, CONTENT_TRANSITION_MS + 50);
 
     contentEl.classList.add('content-offscreen-right');
   }
@@ -1703,10 +1775,23 @@
   // Template loading / back-to-welcome
   // ---------------------------------------------------------------
 
+  function titleForSlug(slug) {
+    for (var i = 0; i < searchData.length; i++) {
+      if (searchData[i].slug === slug) return searchData[i].title;
+    }
+    return null;
+  }
+
   function loadTemplate(slug, title) {
     if (!contentEl) return;
 
-    templateSearchStates = {};
+    var requestId = ++templateRequestId;
+
+    if (templateAbortController) {
+      templateAbortController.abort();
+    }
+    templateAbortController = new AbortController();
+
     currentTemplateSlug = slug;
 
     closeGlossTooltip();
@@ -1714,12 +1799,14 @@
     teardownResultsObserver();
     document.documentElement.classList.add('is-template-view');
 
-    fetch('templates/' + slug + '.html')
+    fetch('templates/' + slug + '.html', { signal: templateAbortController.signal })
       .then(function (r) {
         if (!r.ok) throw new Error('Falló en cargar correctamente ' + slug);
         return r.text();
       })
       .then(function (fragment) {
+        if (requestId !== templateRequestId) return;
+
         swapContentWithTransition(function () {
           contentEl.innerHTML = fragment;
 
@@ -1738,10 +1825,13 @@
         });
       })
       .catch(function (err) {
+        if (err.name === 'AbortError') return;
+        if (requestId !== templateRequestId) return;
+
         console.error('[app] loadTemplate failed:', err);
         var msg = isFileProtocol()
           ? 'Este sitio debe ejecutarse desde un servidor web local, no abrirse directamente como un archivo. Ejecuta <code>python -m http.server 8000</code> en esta carpeta y, luego, abre <br/><b><code>http://localhost:8000/</code></b>.'
-          : 'Lo sentimos mucho, pero esa presentación no se pudo abrir, es posible que todavía no esté disponible al público.';
+          : '<b>404: Presentación no encontrada</b><br/><br/>En este blog hay años de historias, filosofía y arte, pero esta página en específico aún no está lista para el público o el enlace se copió con algún error.<br/><br/>No te preocupes: haz clic en el botón <b>Inicio</b> para regresar a la página principal. Desde allí podrás usar el buscador o revisar el menú con todas las presentaciones que ya están publicadas y listas para leer.<br/><br/>Si el problema persiste, recuerda que puedes escribirle a Nitāy directamente para avisarle.';
         swapContentWithTransition(function () {
           contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
           if (navTitleEl) navTitleEl.textContent = title || slug;
@@ -1755,8 +1845,13 @@
   function goHome() {
     if (!contentEl) return;
 
+    templateRequestId++;
+    if (templateAbortController) {
+      templateAbortController.abort();
+      templateAbortController = null;
+    }
+
     exitContentThen(function () {
-      templateSearchStates = {};
       closeGlossTooltip();
       teardownResultsObserver();
       openedFromSearch = false;
@@ -1781,11 +1876,13 @@
 
   if (backBtn) {
     backBtn.addEventListener('click', function () {
-      if (openedFromSearch) {
-        backToSearchResults();
-      } else {
-        goHome();
-      }
+      // Always means "return to Welcome" — never a step-by-step
+      // history walk. See js/router.js: goHome() clears the hash in a
+      // single jump regardless of how many templates deep we are.
+      // Whether that lands on plain Welcome or restores search results
+      // is decided by openedFromSearch inside the Router.onRouteChange
+      // callback below, exactly as before.
+      window.Router.goHome();
     });
   }
 
@@ -1831,7 +1928,7 @@
   // Welcome-view slideshow
   //
   // Cycles #welcomeDefaultImg through a hardcoded list of images.
-  // Each slide's caption comes from its `alt`: text before the first
+  // Each slide’s caption comes from its `alt`: text before the first
   // "|" is the title, text after is the body; with no "|" the whole
   // alt is shown as the title only.
   // ---------------------------------------------------------------
@@ -2000,6 +2097,22 @@
         minMatchCharLength: fuseSharedOptions.minMatchCharLength,
         keys: ['search']
       });
+
+      // The search box is usable before this fetch resolves (see the
+      // "Cargando el índice..." branch in runSearch()) — rerun whatever
+      // the user already typed instead of leaving it unanswered.
+      if (lastQuery) {
+        runSearch(lastQuery);
+      }
+
+      // A cold load landing directly on an existing #slug resolves its
+      // title (via pendingNavTitle/titleForSlug) before this fetch has
+      // necessarily completed, so the nav title may briefly show the
+      // raw slug. Patch it up now that the real title is available.
+      if (currentTemplateSlug && navTitleEl) {
+        var resolvedTitle = titleForSlug(currentTemplateSlug);
+        if (resolvedTitle) navTitleEl.textContent = resolvedTitle;
+      }
 
     })
     .catch(function (err) {
@@ -2246,7 +2359,17 @@
 
   function setupResultsObserver() {
     var resultsEl = document.getElementById('searchResults');
-    if (!resultsEl || typeof IntersectionObserver === 'undefined') return;
+    if (!resultsEl) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      // No lazy-load support in this browser — render every remaining
+      // result up front instead of silently stopping after the first
+      // BATCH_SIZE.
+      while (renderedCount < currentResults.length) {
+        renderNextBatch();
+      }
+      return;
+    }
 
     var sentinel = document.createElement('div');
     sentinel.id = 'searchSentinel';
@@ -2316,8 +2439,13 @@
   function backToSearchResults() {
     if (!contentEl) return;
 
+    templateRequestId++;
+    if (templateAbortController) {
+      templateAbortController.abort();
+      templateAbortController = null;
+    }
+
     exitContentThen(function () {
-      templateSearchStates = {};
       closeGlossTooltip();
       stopFooterMarquee();
 
@@ -2438,9 +2566,45 @@
     });
   }
 
-  initSlideshow();
+  // ---------------------------------------------------------------
+  // Hash-router wiring
+  //
+  // The URL hash is the single source of truth for "what’s open" (see
+  // js/router.js). Nothing above calls loadTemplate()/goHome()/
+  // backToSearchResults() directly anymore — every navigation goes
+  // through Router.navigateTo()/Router.goHome(), which updates the
+  // hash, and the resulting hashchange (or, for the very first paint,
+  // the immediate dispatch from onRouteChange() below) drives the
+  // actual render. This is also what makes the browser’s native Back/
+  // Forward buttons and landing on any #slug on a hard refresh work
+  // without any special-casing here.
+  // ---------------------------------------------------------------
 
-  // Same enter transition as every navigation, so first paint and every
-  // subsequent template open/close feel like one consistent system.
-  swapContentWithTransition(function () {});
+  var initialSlugFromHash = window.Router.getCurrentSlug();
+
+  window.Router.onRouteChange(function (slug) {
+    if (slug) {
+      var title = pendingNavTitle != null ? pendingNavTitle : (titleForSlug(slug) || slug);
+      pendingNavTitle = null;
+      loadTemplate(slug, title);
+    } else if (document.documentElement.classList.contains('is-template-view')) {
+      // Only actually re-render the welcome view when arriving FROM a
+      // template — on the very first paint with no hash, #content
+      // already *is* the welcome view (see WELCOME_HTML above), so
+      // there’s nothing to swap back to.
+      if (openedFromSearch) {
+        backToSearchResults();
+      } else {
+        goHome();
+      }
+    }
+  });
+
+  if (!initialSlugFromHash) {
+    initSlideshow();
+
+    // Same enter transition as every navigation, so first paint and every
+    // subsequent template open/close feel like one consistent system.
+    swapContentWithTransition(function () {});
+  }
 })();
