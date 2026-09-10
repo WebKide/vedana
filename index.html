@@ -78,9 +78,43 @@
               </button>
             </li>
             <!-- Template links start here -->
-            <li role="none"><a href="#baladeva-tattva" data-slug="baladeva-tattva" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Baladeva Tattva</a></li>
-            <li role="none"><a href="#janmastami" data-slug="janmastami" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Janmāṣṭamī</a></li>
-            <li role="none"><a href="#prabhupada-aparicion" data-slug="prabhupada-aparicion" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Prabhupāda-aparición</a></li>
+            <li role="none" class="nav-folder-item">
+              <button type="button" class="nav-folder-toggle" aria-expanded="false" aria-controls="navFolder-0">
+                <svg class="nav-folder-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>avatāras</span>
+              </button>
+              <ul id="navFolder-0" class="nav-folder-list" hidden>
+                <li role="none"><a href="#baladeva-tattva" data-slug="baladeva-tattva" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Baladeva Tattva</a></li>
+              </ul>
+            </li>
+            <li role="none" class="nav-folder-item">
+              <button type="button" class="nav-folder-toggle" aria-expanded="false" aria-controls="navFolder-1">
+                <svg class="nav-folder-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>jaiva-dharma-libro</span>
+              </button>
+              <ul id="navFolder-1" class="nav-folder-list" hidden>
+                <li role="none"><a href="#jaiva-dharma-40" data-slug="jaiva-dharma-40" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">jaiva-dharma 40</a></li>
+              </ul>
+            </li>
+            <li role="none" class="nav-folder-item">
+              <button type="button" class="nav-folder-toggle" aria-expanded="false" aria-controls="navFolder-2">
+                <svg class="nav-folder-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>rādhā-kṛṣṇa</span>
+              </button>
+              <ul id="navFolder-2" class="nav-folder-list" hidden>
+                <li role="none"><a href="#janmastami" data-slug="janmastami" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Janmāṣṭamī</a></li>
+              </ul>
+            </li>
+            <li role="none" class="nav-folder-item">
+              <button type="button" class="nav-folder-toggle" aria-expanded="false" aria-controls="navFolder-3">
+                <svg class="nav-folder-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>ācāryas</span>
+              </button>
+              <ul id="navFolder-3" class="nav-folder-list" hidden>
+                <li role="none"><a href="#prabhupada-aparicion" data-slug="prabhupada-aparicion" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">Prabhupāda-aparición</a></li>
+              </ul>
+            </li>
+            <li role="none"><a href="#wargame-assessment" data-slug="wargame-assessment" style="font-family: var(--font-sans); text-transform: capitalize;" role="menuitem">wargame assessment</a></li>
             <!-- Template links end here -->
           </ul>
         </div>
@@ -330,6 +364,10 @@
       © 2026<script>new Date().getFullYear()>2026&&document.write("-"+new Date().getFullYear());</script> por <b>WebKide</b> | Este contenido está bajo una licencia <b>CC BY-NC-SA 4.0</b>. | Hecho con VanillaJS
     </div>
 
+    <div class="footer-home-text">
+      <button id="sitemapTrigger" type="button" style="background:none; border:0; padding:0; margin:0; color:var(--accent-green); font:inherit; text-decoration:underline; cursor:pointer;">Tabla de Contenido</button>
+    </div>
+
     <!-- Template-view footer author card -->
     <div class="footer-author">
       <img class="footer-author-img" id="footerAuthorImg" src="img/author_avatar.jpg" alt="@Nitāy Vedana">
@@ -387,6 +425,8 @@
   <!-- App scripts -->
   <script src="js/dependencies/fuse.min.js"></script>
   <script src="js/router.js"></script>
+  <script>window.TEMPLATE_PATHS = {"baladeva-tattva": "avataras/baladeva-tattva.html", "jaiva-dharma-40": "jaiva-dharma-libro/jaiva-dharma-40.html", "janmastami": "radha-krsna/janmastami.html", "prabhupada-aparicion": "acaryas/prabhupada-aparicion.html", "wargame-assessment": "wargame-assessment.html"};</script>
+  <script>window.SITE_MAP = {"folders": [{"display": "avatāras", "entries": [{"slug": "baladeva-tattva", "title": "Baladeva Tattva"}]}, {"display": "jaiva-dharma-libro", "entries": [{"slug": "jaiva-dharma-40", "title": "jaiva-dharma 40"}]}, {"display": "rādhā-kṛṣṇa", "entries": [{"slug": "janmastami", "title": "Janmāṣṭamī"}]}, {"display": "ācāryas", "entries": [{"slug": "prabhupada-aparicion", "title": "Prabhupāda-aparición"}]}], "orphans": [{"slug": "wargame-assessment", "title": "wargame assessment"}]};</script>
   <script src="js/app.js"></script>
 
 </body>

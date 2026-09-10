@@ -450,11 +450,55 @@ header#site-header {
   margin: 0;
 }
 
+/* ---- Folder toggle (two-level menu) ---- */
+
+.nav-folder-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+
+  border: 0;
+  border-radius: 6px;
+  background: none;
+
+  padding: 9px 12px;
+
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: left;
+  text-transform: capitalize;
+
+  cursor: pointer;
+}
+
+.nav-folder-toggle:hover,
+.nav-folder-toggle:focus-visible {
+  background: var(--success-bg);
+  outline: none;
+}
+
+.nav-folder-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.nav-folder-toggle[aria-expanded="true"] .nav-folder-chevron {
+  transform: rotate(90deg);
+}
+
+.nav-dropdown .nav-folder-list {
+  padding: 2px 0 2px 22px;
+}
+
 .nav-dropdown a {
   display: block;
   padding: 9px 12px;
   border-radius: 6px;
-  color: var(--text);
+  color: var(--white);
+  font-weight: 400;
   text-decoration: none;
   font-size: 0.9rem;
 }

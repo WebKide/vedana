@@ -150,6 +150,9 @@
   var codeLightboxLastFocus = null;
   var codeLightboxEditMode = false;
 
+  var sitemapTrigger =
+    document.getElementById('sitemapTrigger');
+
   // In-memory only — never dbGet/dbSet'd — and fully independent of
   // #content's own `fontSize` var above. Scoped to codeLightboxBody
   // alone, so it never touches #content's font size. Reset to
@@ -376,13 +379,7 @@
   //   - Escape closes immediately.
   // ---------------------------------------------------------------
 
-  var menuCloseTimer = null;
-  var MENU_CLOSE_DELAY = 2300; // 2.3 seconds
-
-
   function openMenu() {
-    clearTimeout(menuCloseTimer);
-
     if (navMenuWrap) {
       navMenuWrap.classList.add('is-open');
     }
@@ -394,8 +391,6 @@
 
 
   function closeMenu() {
-    clearTimeout(menuCloseTimer);
-
     if (navMenuWrap) {
       navMenuWrap.classList.remove('is-open');
     }
@@ -403,21 +398,46 @@
     if (navMenuBtn) {
       navMenuBtn.setAttribute('aria-expanded', 'false');
     }
+
+    closeAllNavFolders();
   }
 
 
-  function scheduleMenuClose() {
-    clearTimeout(menuCloseTimer);
+  // ---------------------------------------------------------------
+  // Two-level nav menu: folder toggles inside the dropdown
+  //
+  // Click/tap only — hover is no longer used anywhere in this menu.
+  // Only one folder is expanded at a time: opening a new one closes
+  // whichever was previously open, and closing the whole dropdown
+  // resets every folder back to collapsed for next time.
+  // ---------------------------------------------------------------
 
-    menuCloseTimer = setTimeout(function () {
-      closeMenu();
-    }, MENU_CLOSE_DELAY);
+  function closeAllNavFolders() {
+    if (!navDropdown) return;
+
+    var toggles = navDropdown.querySelectorAll('.nav-folder-toggle');
+
+    Array.prototype.forEach.call(toggles, function (toggle) {
+      toggle.setAttribute('aria-expanded', 'false');
+
+      var list = document.getElementById(toggle.getAttribute('aria-controls'));
+      if (list) list.hidden = true;
+    });
   }
 
 
-  function cancelMenuClose() {
-    clearTimeout(menuCloseTimer);
-    menuCloseTimer = null;
+  function toggleNavFolder(toggle) {
+    var list = document.getElementById(toggle.getAttribute('aria-controls'));
+    if (!list) return;
+
+    var wasOpen = toggle.getAttribute('aria-expanded') === 'true';
+
+    closeAllNavFolders();
+
+    if (wasOpen) return; // it was already open — leave everything collapsed
+
+    toggle.setAttribute('aria-expanded', 'true');
+    list.hidden = false;
   }
 
 
@@ -435,31 +455,6 @@
         openMenu();
       }
     });
-  }
-
-
-  // ---------------------------------------------------------------
-  // Desktop hover
-  //
-  // Pointer events let this work nicely with mouse/trackpad while
-  // not interfering with touch screens.
-  // ---------------------------------------------------------------
-
-  if (navMenuWrap) {
-
-    navMenuWrap.addEventListener('pointerenter', function (e) {
-      // Only use hover behavior for mouse/trackpad.
-      if (e.pointerType === 'mouse') {
-        openMenu();
-      }
-    });
-
-    navMenuWrap.addEventListener('pointerleave', function (e) {
-      if (e.pointerType === 'mouse') {
-        scheduleMenuClose();
-      }
-    });
-
   }
 
 
@@ -523,6 +518,18 @@
 
         closeMenu();
         openTemplateSearch();
+
+        return;
+      }
+
+      var folderToggle =
+        e.target.closest('.nav-folder-toggle');
+
+      if (folderToggle) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        toggleNavFolder(folderToggle);
 
         return;
       }
@@ -1666,6 +1673,20 @@
       window.Router.navigateTo(slug);
     });
 
+    // Link inside the site-map view (see renderSitemap()) — behaves
+    // like an ordinary nav link, not like a search result: "back"
+    // returns straight to Inicio rather than back to the site-map.
+    contentEl.addEventListener('click', function (e) {
+      var link = e.target.closest('a.sitemap-link');
+      if (!link) return;
+      e.preventDefault();
+
+      sitemapOpen = false;
+      openedFromSearch = false;
+      pendingNavTitle = link.textContent.trim();
+      window.Router.navigateTo(link.getAttribute('data-slug'));
+    });
+
     // Code block drag-to-pan (mouse only — .is-dragging in styles.css
     // handles the grabbing cursor + selection lock while active; touch
     // devices get native scrolling and never enter this path).
@@ -1799,7 +1820,9 @@
     teardownResultsObserver();
     document.documentElement.classList.add('is-template-view');
 
-    fetch('templates/' + slug + '.html', { signal: templateAbortController.signal })
+    var templatePath = (window.TEMPLATE_PATHS && window.TEMPLATE_PATHS[slug]) || (slug + '.html');
+
+    fetch('templates/' + templatePath, { signal: templateAbortController.signal })
       .then(function (r) {
         if (!r.ok) throw new Error('Falló en cargar correctamente ' + slug);
         return r.text();
@@ -2064,6 +2087,7 @@
   var lastQuery = '';       // raw (un-normalized) text of the last run search
   var openedFromSearch = false; // true if the open template came from a search result
   var resultsObserver = null;   // IntersectionObserver driving lazy-load
+  var sitemapOpen = false;      // true while the "Tabla de Contenido" view is showing
 
   fetch('templates/search-index.json')
     .then(function (r) { return r.json(); })
@@ -2433,6 +2457,100 @@
     setupResultsObserver();
   }
 
+  // ---------------------------------------------------------------
+  // Site-map ("Tabla de Contenido")
+  //
+  // Not a modal — it renders straight into the same #searchResults
+  // container as a real search, reusing .search-group/.shade-a/.shade-b
+  // exactly like buildGroupEl() above: one group per folder (in the
+  // same order as window.SITE_MAP, already alphabetized server-side),
+  // then a final group for anything at the root. Toggled by the footer
+  // trigger button; typing in the search box also implicitly exits it,
+  // since runSearch() clears #searchResults itself.
+  // ---------------------------------------------------------------
+
+  function buildSitemapGroupEl(titleText, groupEntries, shadeClass) {
+    var wrap = document.createElement('div');
+    wrap.className = 'search-group ' + shadeClass;
+
+    var top = document.createElement('div');
+    top.className = 'search-group-top';
+
+    var title = document.createElement('h6');
+    title.className = 'search-group-title';
+    title.textContent = titleText;
+
+    top.appendChild(title);
+    wrap.appendChild(top);
+
+    var list = document.createElement('ul');
+    list.className = 'search-group-bullets';
+
+    groupEntries.forEach(function (entry) {
+      var li = document.createElement('li');
+      var link = document.createElement('a');
+      link.href = '#' + entry.slug;
+      link.className = 'sitemap-link';
+      link.setAttribute('data-slug', entry.slug);
+      link.textContent = entry.title;
+      li.appendChild(link);
+      list.appendChild(li);
+    });
+
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function renderSitemap() {
+    var resultsEl = document.getElementById('searchResults');
+    var defaultImg = document.getElementById('welcomeDefaultImg');
+    var input = document.getElementById('searchInput');
+    var clearBtn = document.getElementById('searchClearBtn');
+
+    if (!resultsEl || !window.SITE_MAP) return;
+
+    teardownResultsObserver();
+    currentResults = [];
+    renderedCount = 0;
+    lastQuery = '';
+
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (defaultImg) defaultImg.style.display = 'none';
+
+    resultsEl.innerHTML = '';
+
+    var frag = document.createDocumentFragment();
+    var shadeIndex = 0;
+
+    window.SITE_MAP.folders.forEach(function (folder) {
+      var shadeClass = (shadeIndex % 2 === 0) ? 'shade-a' : 'shade-b';
+      shadeIndex++;
+      frag.appendChild(buildSitemapGroupEl(folder.display, folder.entries, shadeClass));
+    });
+
+    if (window.SITE_MAP.orphans.length) {
+      var orphanShadeClass = (shadeIndex % 2 === 0) ? 'shade-a' : 'shade-b';
+      frag.appendChild(buildSitemapGroupEl('Otras Presentaciones', window.SITE_MAP.orphans, orphanShadeClass));
+    }
+
+    resultsEl.appendChild(frag);
+  }
+
+  if (sitemapTrigger) {
+    sitemapTrigger.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      sitemapOpen = !sitemapOpen;
+
+      if (sitemapOpen) {
+        renderSitemap();
+      } else {
+        runSearch('');
+      }
+    });
+  }
+
   // Restores the welcome view and re-runs the last query, instead of going
   // fully home — used when the back button is pressed after opening a
   // template from a search result.
@@ -2477,6 +2595,8 @@
   var debouncedSearch = debounce(function (val) { runSearch(val); }, 150);
 
   function bindWelcomeSearch() {
+    sitemapOpen = false; // fresh welcome view — toggle starts closed every time
+
     var input = document.getElementById('searchInput');
     var clearBtn = document.getElementById('searchClearBtn');
 
