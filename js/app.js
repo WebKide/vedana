@@ -201,7 +201,7 @@
     'Después de 14 años en India, Nitāy regresó a Latinoamérica con historias, herramientas y suficientes experiencias extrañas como para sospechar que el caos no es un problema: es parte de la vida.',
     'Después de 14 años en India, Nitāy regresó a Latinoamérica. Trajo consigo experiencias, conocimientos y unas cuantas historias que probablemente suenen inventadas, pero no lo son.',
     'Después de 14 años en India, Nitāy volvió a casa con algo más difícil de empacar que baratijas: preguntas nuevas, sabidurías ancestrales y una peligrosa certeza de que el caos tiene sentido.',
-    'Luego de 14 años en India, Nitāy regresó a Latinoamérica con recuerdos difíciles de resumir y conocimientos casi imposibles de explicar. El resultado fue intentar escribirlos en castellano.',
+    'Luego de 14 años en India, Nitāy regresó a Latinoamérica con recuerdos difíciles de resumir y conocimientos casi imposibles de explicar. ¿La solución? intentar escribirlos en castellano.',
     'Nitāy no es un maestro ni un mesías, solo un estudiante apasionado que vivió 14 años en India y aprendió a convertir el caos en experiencias, que ahora comparte en castellano.',
     'Nitāy pasó 14 años en India entre estudios, trabajo, aventuras y situaciones difíciles de explicar. Volvió a Latinoamérica con algunas cosas que valía la pena traer de vuelta.',
     'Nitāy pasó 14 años en India explorando asuntos antiguos, extraños y bastante más prácticos de lo que parecen. Al regresar, encontró que algunas de esas cosas merecían ser contadas en castellano.',

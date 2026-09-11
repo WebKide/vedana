@@ -167,6 +167,7 @@ body::after {
   bottom: 0;
   left: 0;
   width: 8px;
+  height: 100vh;
   background-color: var(--accent);
   pointer-events: none;
 
@@ -2336,15 +2337,16 @@ html.code-lightbox-active body {
 #content .gloss-trigger {
   cursor: pointer;
   border-radius: 3px;
+  background-color: var(--overlay-dark);
   text-decoration: underline;
-  text-decoration-color: var(--accent);
+  text-decoration-color: var(--violet);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
 
 #content .gloss-trigger:hover,
 #content .gloss-trigger:focus-visible {
-  text-decoration-color: var(--accent-green);
+  text-decoration-color: var(--lime);
   outline: none;
 }
 
