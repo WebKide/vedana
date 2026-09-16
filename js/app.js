@@ -189,6 +189,12 @@
   var WELCOME_HTML = contentEl ? contentEl.innerHTML : '';
   var DEFAULT_TITLE = navTitleEl ? navTitleEl.textContent : 'Presentaciones';
 
+  // initNavTitleMarquee is a function declaration defined further down
+  // (see "Nav-title marquee"), so it's already hoisted and safe to call
+  // here — this just covers the one title-set that happens directly in
+  // HTML rather than through setNavTitle().
+  initNavTitleMarquee();
+
   // ---------------------------------------------------------------
   // Random footer bio — picked once per page load; .footer-author
   // lives outside #content, so it’s never touched again after this.
@@ -540,9 +546,16 @@
 
       e.preventDefault();
 
+      var slug = link.getAttribute('data-slug');
+
       openedFromSearch = false;
-      pendingNavTitle = link.textContent.trim();
-      window.Router.navigateTo(link.getAttribute('data-slug'));
+      // The dropdown now shows a menu-only label that can differ from
+      // the real title (see generate_site.py's extract_leading_h1_label/
+      // prettify_filename), so it can no longer be read off the link's
+      // own text — resolve the actual title the same way a cold #slug
+      // load already does.
+      pendingNavTitle = titleForSlug(slug) || link.textContent.trim();
+      window.Router.navigateTo(slug);
 
       closeMenu();
     });
@@ -1818,6 +1831,9 @@
     closeGlossTooltip();
     stopSlideshow();
     teardownResultsObserver();
+    sitemapOpen = false; // guard: prevents backBtn's sitemapOpen branch
+                          // from misfiring after navigating out of the
+                          // welcome view into an actual template
     document.documentElement.classList.add('is-template-view');
 
     var templatePath = (window.TEMPLATE_PATHS && window.TEMPLATE_PATHS[slug]) || (slug + '.html');
@@ -1841,7 +1857,7 @@
           contentEl.scrollTop = 0;
           window.scrollTo(0, 0);
 
-          if (navTitleEl) navTitleEl.textContent = title || slug;
+          setNavTitle(title || slug);
           if (backBtn) backBtn.style.display = '';
 
           initFooterMarquee();
@@ -1857,7 +1873,7 @@
           : '<b>404: Presentación no encontrada</b><br/><br/>En este blog hay años de historias, filosofía y arte, pero esta página en específico aún no está lista para el público o el enlace se copió con algún error.<br/><br/>No te preocupes: haz clic en el botón <b>Inicio</b> para regresar a la página principal. Desde allí podrás usar el buscador o revisar el menú con todas las presentaciones que ya están publicadas y listas para leer.<br/><br/>Si el problema persiste, recuerda que puedes escribirle a Nitāy directamente para avisarle.';
         swapContentWithTransition(function () {
           contentEl.innerHTML = '<p style="padding:20px;">' + msg + '</p>';
-          if (navTitleEl) navTitleEl.textContent = title || slug;
+          setNavTitle(title || slug);
           if (backBtn) backBtn.style.display = '';
 
           initFooterMarquee();
@@ -1888,7 +1904,7 @@
       swapContentWithTransition(function () {
         contentEl.innerHTML = WELCOME_HTML;
         initAccordions(contentEl);
-        if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
+        setNavTitle(DEFAULT_TITLE);
         if (backBtn) backBtn.style.display = 'none';
         window.scrollTo(0, 0);
         bindWelcomeSearch();
@@ -1899,9 +1915,20 @@
 
   if (backBtn) {
     backBtn.addEventListener('click', function () {
-      // Always means "return to Welcome" — never a step-by-step
-      // history walk. See js/router.js: goHome() clears the hash in a
-      // single jump regardless of how many templates deep we are.
+      // The site-map view is a pure #searchResults toggle inside the
+      // welcome view — it never touches the router (no hash change,
+      // no is-template-view), so Router.goHome() has nothing to undo
+      // here. Close it directly, mirroring sitemapTrigger's own close.
+      if (sitemapOpen) {
+        sitemapOpen = false;
+        runSearch('');
+        backBtn.style.display = 'none';
+        return;
+      }
+
+      // Otherwise: always means "return to Welcome" — never a step-by-
+      // step history walk. See js/router.js: goHome() clears the hash
+      // in a single jump regardless of how many templates deep we are.
       // Whether that lands on plain Welcome or restores search results
       // is decided by openedFromSearch inside the Router.onRouteChange
       // callback below, exactly as before.
@@ -1945,6 +1972,64 @@
     if (!track) return;
     track.classList.remove('marquee');
     track.style.removeProperty('--marquee-duration');
+  }
+
+  // ---------------------------------------------------------------
+  // Nav-title marquee
+  //
+  // Unlike the footer ticker (static text, duplicate span baked into
+  // the HTML up front), #navTitle's text changes on every navigation
+  // — there's nothing to duplicate ahead of time. So instead: measure
+  // the single #navTitle span as-is; only when it actually overflows,
+  // wrap it in a track and inject a decorative aria-hidden clone
+  // (same .footer-marquee-track/.marquee mechanics as the footer).
+  // teardownNavTitleMarquee() unwraps back to a single plain span
+  // before the next title is set, so every title gets measured fresh
+  // rather than inheriting a stale wrapped/unwrapped state.
+  // ---------------------------------------------------------------
+
+  function teardownNavTitleMarquee() {
+    var track = navMenuBtn && navMenuBtn.querySelector('.footer-marquee-track');
+    if (!track) return;
+
+    var original = track.querySelector('#navTitle');
+    if (original) track.parentNode.insertBefore(original, track);
+
+    track.remove();
+  }
+
+  function initNavTitleMarquee() {
+    if (!navTitleEl) return;
+
+    // Already wrapped — nothing to do until the next
+    // teardownNavTitleMarquee() resets it for a new title.
+    if (navTitleEl.closest('.footer-marquee-track')) return;
+
+    var overflow = navTitleEl.scrollWidth - navTitleEl.clientWidth;
+    if (overflow <= 0) return;
+
+    var track = document.createElement('span');
+    track.className = 'footer-marquee-track';
+
+    navTitleEl.parentNode.insertBefore(track, navTitleEl);
+    track.appendChild(navTitleEl);
+
+    var duplicate = navTitleEl.cloneNode(true);
+    duplicate.removeAttribute('id');
+    duplicate.setAttribute('aria-hidden', 'true');
+    track.appendChild(duplicate);
+
+    var duration = Math.max(15, Math.min(60, navTitleEl.scrollWidth / 40));
+    track.style.setProperty('--marquee-duration', duration + 's');
+    track.classList.add('marquee');
+  }
+
+  // Single choke point for every place that sets the nav title, so
+  // teardown-before-measure can never be forgotten at a call site.
+  function setNavTitle(text) {
+    teardownNavTitleMarquee();
+    if (navTitleEl) navTitleEl.textContent = text;
+    initNavTitleMarquee();
   }
 
   // ---------------------------------------------------------------
@@ -2135,7 +2220,7 @@
       // raw slug. Patch it up now that the real title is available.
       if (currentTemplateSlug && navTitleEl) {
         var resolvedTitle = titleForSlug(currentTemplateSlug);
-        if (resolvedTitle) navTitleEl.textContent = resolvedTitle;
+        if (resolvedTitle) setNavTitle(resolvedTitle);
       }
 
     })
@@ -2545,8 +2630,10 @@
 
       if (sitemapOpen) {
         renderSitemap();
+        if (backBtn) backBtn.style.display = '';
       } else {
         runSearch('');
+        if (backBtn) backBtn.style.display = 'none';
       }
     });
   }
@@ -2575,7 +2662,7 @@
       swapContentWithTransition(function () {
         contentEl.innerHTML = WELCOME_HTML;
         initAccordions(contentEl);
-        if (navTitleEl) navTitleEl.textContent = DEFAULT_TITLE;
+        setNavTitle(DEFAULT_TITLE);
         if (backBtn) backBtn.style.display = 'none';
         window.scrollTo(0, 0);
         bindWelcomeSearch();
