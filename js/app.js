@@ -575,6 +575,13 @@
 
   var HEADING_TAGS = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
 
+  /* Templates wrap parsed content in #content-body, but the accordion
+     logic works on DIRECT children — resolve the wrapper first.
+     Falls back to #content itself (welcome view has no wrapper). */
+  function accordionRoot() {
+    return (contentEl && contentEl.querySelector('#content-body')) || contentEl;
+  }
+
   function isHeading(node) {
     return !!node && HEADING_TAGS.indexOf(node.tagName) !== -1;
   }
@@ -701,6 +708,29 @@
       // no content to collapse, so leave it as a plain heading.
       if (!hasRealContent(inner)) return;
 
+      var preview = document.createElement('span');
+      preview.className = 'accordion-preview';
+      preview.setAttribute('aria-hidden', 'true');
+
+      var previewText = '';
+      var previewNodes = inner.querySelectorAll(
+        'p:not(.subtitle), li, blockquote'
+      );
+
+      for (var i = 0; i < previewNodes.length; i++) {
+        var candidate = previewNodes[i].textContent.trim();
+        if (candidate) {
+          previewText = candidate;
+          break;
+        }
+      }
+
+      if (!previewText) {
+        previewText = inner.textContent.trim();
+      }
+
+      preview.textContent = previewText;
+
       heading.classList.add('accordion-toggle');
       heading.setAttribute('role', 'button');
       heading.setAttribute('tabindex', '0');
@@ -709,21 +739,52 @@
       isFirstToggle = false;
 
       heading.setAttribute('aria-expanded', startExpanded ? 'true' : 'false');
+
+      var title = document.createElement('span');
+      title.className = 'accordion-title';
+
+      while (heading.firstChild) {
+        title.appendChild(heading.firstChild);
+      }
+
+      var dots = document.createElement('span');
+      dots.className = 'accordion-dots';
+      dots.setAttribute('aria-hidden', 'true');
+      dots.innerHTML =
+        '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" ' +
+        'aria-hidden="true" focusable="false">' +
+          '<path d="M 12 8 c 1.1 0 2 -0.9 2 -2 s -0.9 -2 -2 -2 s -2 0.9 -2 2 s 0.9 2 2 2 Z m 0 2 c -1.1 0 -2 0.9 -2 2 s 0.9 2 2 2 s 2 -0.9 2 -2 s -0.9 -2 -2 -2 Z m 0 6 c -1.1 0 -2 0.9 -2 2 s 0.9 2 2 2 s 2 -0.9 2 -2 s -0.9 -2 -2 -2 Z" ' +
+          'fill="currentColor"/>' +
+        '</svg>';
+
+      heading.appendChild(dots);
+      heading.appendChild(title);
       heading.appendChild(makeChevron());
 
       var body = document.createElement('div');
       body.className = 'accordion-body' + (startExpanded ? '' : ' is-collapsed');
       body.appendChild(inner);
 
-      heading.insertAdjacentElement('afterend', body);
+      heading.insertAdjacentElement('afterend', preview);
+      preview.insertAdjacentElement('afterend', body);
     });
 
     initCodeCopyButtons(root);
   }
 
+  // heading.nextElementSibling is now .accordion-preview (see initAccordions),
+  // so the body has to be looked up by skipping over it.
+  function getAccordionBody(heading) {
+    var node = heading.nextElementSibling;
+    if (node && node.classList.contains('accordion-preview')) {
+      node = node.nextElementSibling;
+    }
+    return (node && node.classList.contains('accordion-body')) ? node : null;
+  }
+
   function toggleAccordionSection(heading) {
-    var body = heading.nextElementSibling;
-    if (!body || !body.classList.contains('accordion-body')) return;
+    var body = getAccordionBody(heading);
+    if (!body) return;
 
     var expanded = heading.getAttribute('aria-expanded') !== 'false';
 
@@ -746,8 +807,8 @@
     });
 
     headings.forEach(function (heading) {
-      var body = heading.nextElementSibling;
-      if (!body || !body.classList.contains('accordion-body')) return;
+      var body = getAccordionBody(heading);
+      if (!body) return;
       heading.setAttribute('aria-expanded', anyCollapsed ? 'true' : 'false');
       body.classList.toggle('is-collapsed', !anyCollapsed);
     });
@@ -762,9 +823,9 @@
       });
 
     headings.forEach(function (heading) {
-      var body = heading.nextElementSibling;
+      var body = getAccordionBody(heading);
 
-      if (!body || !body.classList.contains('accordion-body')) {
+      if (!body) {
         return;
       }
 
@@ -1335,7 +1396,7 @@
      * This is deliberately explicit rather than toggleAllAccordions():
      * searching must always expose every section.
      */
-    expandAllAccordions(contentEl);
+    expandAllAccordions(accordionRoot());
 
     if (templateSearchModal) {
       templateSearchModal.classList.add('is-open');
@@ -1643,7 +1704,7 @@
     contentEl.addEventListener('dblclick', function (e) {
       clearTimeout(accordionClickTimer);
       e.preventDefault();
-      toggleAllAccordions(contentEl);
+      toggleAllAccordions(accordionRoot());
     });
 
     contentEl.addEventListener('keydown', function (e) {
@@ -1849,7 +1910,7 @@
         swapContentWithTransition(function () {
           contentEl.innerHTML = fragment;
 
-          initAccordions(contentEl);
+          initAccordions(accordionRoot());
 
           clearTemplateSearchHighlights();
           updateTemplateSearchControls();
@@ -2001,27 +2062,53 @@
   function initNavTitleMarquee() {
     if (!navTitleEl) return;
 
-    // Already wrapped — nothing to do until the next
-    // teardownNavTitleMarquee() resets it for a new title.
-    if (navTitleEl.closest('.footer-marquee-track')) return;
+    // Capture the exact title this initialization belongs to. Navigation
+    // can happen again before the deferred measurement runs, so an older
+    // measurement must never wrap a newer title.
+    var titleAtSchedule = navTitleEl.textContent;
 
-    var overflow = navTitleEl.scrollWidth - navTitleEl.clientWidth;
-    if (overflow <= 0) return;
+    function measureAndStart() {
+      if (!navTitleEl) return;
+      if (navTitleEl.textContent !== titleAtSchedule) return;
 
-    var track = document.createElement('span');
-    track.className = 'footer-marquee-track';
+      // Already wrapped by a newer initialization.
+      if (navTitleEl.closest('.footer-marquee-track')) return;
 
-    navTitleEl.parentNode.insertBefore(track, navTitleEl);
-    track.appendChild(navTitleEl);
+      var overflow = navTitleEl.scrollWidth - navTitleEl.clientWidth;
+      if (overflow <= 0) return;
 
-    var duplicate = navTitleEl.cloneNode(true);
-    duplicate.removeAttribute('id');
-    duplicate.setAttribute('aria-hidden', 'true');
-    track.appendChild(duplicate);
+      var track = document.createElement('span');
+      track.className = 'footer-marquee-track';
 
-    var duration = Math.max(15, Math.min(60, navTitleEl.scrollWidth / 40));
-    track.style.setProperty('--marquee-duration', duration + 's');
-    track.classList.add('marquee');
+      navTitleEl.parentNode.insertBefore(track, navTitleEl);
+      track.appendChild(navTitleEl);
+
+      var duplicate = navTitleEl.cloneNode(true);
+      duplicate.removeAttribute('id');
+      duplicate.setAttribute('aria-hidden', 'true');
+      track.appendChild(duplicate);
+
+      var duration = Math.max(15, Math.min(60, navTitleEl.scrollWidth / 40));
+      track.style.setProperty('--marquee-duration', duration + 's');
+
+      // Force the animation to start from its initial position every time
+      // a presentation becomes active.
+      void track.offsetWidth;
+      track.classList.add('marquee');
+    }
+
+    // Wait for layout to settle after navigation/title replacement.
+    // Two frames also cover the case where the first frame is spent
+    // recalculating the button's width.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(measureAndStart);
+        } else {
+          measureAndStart();
+        }
+      });
+    });
   }
 
   // Single choke point for every place that sets the nav title, so
