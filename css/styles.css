@@ -308,7 +308,8 @@ header#site-header {
 .back-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  line-height: 1;
   min-height: var(--touch);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -319,6 +320,11 @@ header#site-header {
   font-size: 0.85rem;
   padding: 6px 10px;
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.back-btn .back-icon {
+  flex-shrink: 0;
+  display: block;
 }
 
 .back-btn:hover,
@@ -1384,6 +1390,103 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
 #content blockquote i,
 #content blockquote em { font-style: italic; color: var(--ink); }
 
+#content definition-card {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  margin: 28px auto;
+  max-width: 100%;
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--jade);
+  border-radius: var(--radius-sm);
+}
+
+#content definition-card .ribbon {
+  position: absolute;
+  top: 23px;
+  right: -37px;
+  width: 140px;
+
+  background: var(--jade);
+  color: #06222B;
+
+  font-family: var(--font-sans);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+
+  padding: 2px 0;
+
+  transform: rotate(45deg);
+
+  box-shadow: 0 2px 8px var(--shadow-dark);
+  z-index: 1;
+}
+
+#content definition-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#content definition-term {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.3em;
+  letter-spacing: -0.01em;
+}
+
+#content definition-pos {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.78em;
+  text-transform: lowercase;
+}
+
+#content definition-pronunciation {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.88em;
+}
+
+#content definition-meaning {
+  display: block;
+  margin: 14px 0 0;
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: 1em;
+  line-height: 1.7;
+}
+
+#content definition-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+#content definition-script {
+  color: var(--muted);
+  font-family: var(--font-serif);
+  font-size: 1em;
+}
+
+@media (max-width: 520px) {
+  #content definition-card { padding: 14px 16px; }
+  #content definition-term { font-size: 1.15em; }
+}
+
 #content blockquote blockquote-ref {
   display: block;
   text-align: right;
@@ -1526,6 +1629,19 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
   border-bottom: 1px solid var(--border);
   opacity: 0.9;
   z-index: -1;
+}
+
+#content h1 strong, #content h1 b,
+#content h1 em, #content h1 i,
+#content h2 strong, #content h2 b,
+#content h2 em, #content h2 i,
+#content h3 strong, #content h3 b,
+#content h3 em, #content h3 i,
+#content h4 strong, #content h4 b,
+#content h4 em, #content h4 i,
+#content h5 strong, #content h5 b,
+#content h5 em, #content h5 i {
+  color: currentColor;
 }
 
 #content-body > h1,
@@ -1684,6 +1800,7 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
   margin: 0 auto;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
+  cursor: zoom-in;
 }
 
 #content figure.presentation-image figcaption {
@@ -1973,6 +2090,24 @@ html.code-lightbox-active body { overflow: hidden; }
   font: inherit;
   white-space: inherit;
 }
+
+.code-lightbox.is-image-mode .code-lightbox-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.code-lightbox-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.code-lightbox-image[hidden] { display: none; }
+
+.code-lightbox.is-image-mode .lightbox-code-only { display: none; }
 
 @media (max-width: 600px) {
   .code-lightbox-panel {

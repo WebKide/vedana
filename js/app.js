@@ -135,6 +135,12 @@
   var codeLightboxPre =
     document.getElementById('codeLightboxPre');
 
+  var codeLightboxImage =
+    document.getElementById('codeLightboxImage');
+
+  var codeLightboxTitle =
+    document.getElementById('codeLightboxTitle');
+
   var codeLightboxBody =
     document.getElementById('codeLightboxBody');
 
@@ -1478,6 +1484,11 @@
   function openCodeLightbox(pre) {
     if (!codeLightbox || !codeLightboxCode) return;
 
+    codeLightbox.classList.remove('is-image-mode');
+    if (codeLightboxTitle) codeLightboxTitle.textContent = 'Pizarra Mágica';
+    if (codeLightboxImage) { codeLightboxImage.hidden = true; codeLightboxImage.removeAttribute('src'); }
+    if (codeLightboxPre) codeLightboxPre.hidden = false;
+
     var code = pre.querySelector('code') || pre;
     codeLightboxCode.textContent = code.innerText;
 
@@ -1501,14 +1512,46 @@
     if (codeLightboxClose) codeLightboxClose.focus();
   }
 
+  function openImageLightbox(img) {
+    if (!codeLightbox || !codeLightboxImage) return;
+
+    codeLightbox.classList.add('is-image-mode');
+    if (codeLightboxTitle) codeLightboxTitle.textContent = 'Visor de imágenes';
+
+    codeLightboxImage.src = img.currentSrc || img.src;
+    codeLightboxImage.alt = img.alt || '';
+    codeLightboxImage.hidden = false;
+
+    if (codeLightboxPre) codeLightboxPre.hidden = true;
+
+    _applyLightboxEditMode(false);
+
+    if (codeLightboxBody) {
+      codeLightboxBody.scrollLeft = 0;
+      codeLightboxBody.scrollTop = 0;
+    }
+
+    codeLightboxLastFocus = document.activeElement;
+
+    codeLightbox.classList.add('is-open');
+    codeLightbox.inert = false;
+    document.documentElement.classList.add('code-lightbox-active');
+
+    if (codeLightboxClose) codeLightboxClose.focus();
+  }
+
   function closeCodeLightbox() {
     if (!codeLightbox) return;
 
     codeLightbox.classList.remove('is-open');
+    codeLightbox.classList.remove('is-image-mode');
     codeLightbox.inert = true;
     document.documentElement.classList.remove('code-lightbox-active');
 
     if (codeLightboxCode) codeLightboxCode.textContent = '';
+    if (codeLightboxImage) { codeLightboxImage.hidden = true; codeLightboxImage.removeAttribute('src'); }
+    if (codeLightboxPre) codeLightboxPre.hidden = false;
+    if (codeLightboxTitle) codeLightboxTitle.textContent = 'Pizarra Mágica';
 
     endCodeLightboxDrag(null, true);
     _applyLightboxEditMode(false);
@@ -1590,6 +1633,25 @@
 
   if (codeLightboxCopyBtn) {
     codeLightboxCopyBtn.addEventListener('click', function () {
+
+      if (codeLightbox && codeLightbox.classList.contains('is-image-mode')) {
+        if (!codeLightboxImage || !codeLightboxImage.src) return;
+
+        if (navigator.clipboard && window.ClipboardItem) {
+          fetch(codeLightboxImage.src)
+            .then(function (r) { return r.blob(); })
+            .then(function (blob) {
+              var item = {};
+              item[blob.type] = blob;
+              return navigator.clipboard.write([new ClipboardItem(item)]);
+            })
+            .catch(function (err) {
+              console.error('[app] No se pudo copiar la imagen:', err);
+            });
+        }
+        return;
+      }
+
       var text = codeLightboxCode ? codeLightboxCode.textContent : '';
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).catch(function (err) {
@@ -1702,6 +1764,13 @@
     });
 
     contentEl.addEventListener('dblclick', function (e) {
+      var lightboxImg = e.target.closest('figure.presentation-image img');
+      if (lightboxImg) {
+        e.preventDefault();
+        openImageLightbox(lightboxImg);
+        return;
+      }
+
       clearTimeout(accordionClickTimer);
       e.preventDefault();
       toggleAllAccordions(accordionRoot());
