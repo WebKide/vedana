@@ -34,7 +34,13 @@
   function getCurrentSlug() {
     var raw = location.hash || '';
     raw = raw.replace(/^#/, '');
-    return raw ? decodeURIComponent(raw) : '';
+    if (!raw) return '';
+    try {
+      return decodeURIComponent(raw);
+    } catch (e) {
+      // Malformed escape sequence: fall through to the normal 404 view.
+      return raw;
+    }
   }
 
   var routeCallback = null;
@@ -68,7 +74,14 @@
 
     goHome: function () {
       if (location.hash) {
-        location.hash = '';
+        try {
+          // pushState instead of location.hash = '' so the URL doesn't keep a
+          // trailing "#". It doesn't fire hashchange, so dispatch manually.
+          history.pushState(null, '', location.pathname + location.search);
+          dispatch();
+        } catch (e) {
+          location.hash = '';
+        }
       } else {
         // Already home — nothing to change, but still let the caller’s
         // logic run (e.g. re-showing search results) without adding a

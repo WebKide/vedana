@@ -55,6 +55,12 @@
     };
   }
 
+  // Combining diacritical marks U+0300..U+036F. Built with fromCharCode so no
+  // backslash or invisible character has to survive Python's string escaping.
+  var COMBINING_MARKS_RE = new RegExp(
+    '[' + String.fromCharCode(0x300) + '-' + String.fromCharCode(0x36f) + ']', 'g'
+  );
+
   /* Mirrors the Python-side normalize_search_text() so indexed text and
      typed queries normalize the same way. */
   function normalizeQuery(str) {
@@ -64,7 +70,7 @@
       .replace(/Ñ/g, placeholder)
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
+      .replace(COMBINING_MARKS_RE, '')
       .replace(new RegExp(placeholder, 'g'), 'ñ')
       .replace(/[^a-z0-9ñ\s]/g, ' ')
       .replace(/\s+/g, ' ')
@@ -257,6 +263,7 @@
 
   function applyFontSize(px) {
     if (contentEl) contentEl.style.fontSize = px + 'px';
+    scheduleReveal(); // line heights (and so the ramp zones) just changed
   }
 
   var fontSize = dbGet('fontSize', FONT_DEFAULT);
@@ -424,6 +431,48 @@
   // resets every folder back to collapsed for next time.
   // ---------------------------------------------------------------
 
+  // ---------------------------------------------------------------
+  // CONTINUAR: the last presentation that was opened. Written on every
+  // template load, so after the app is killed and relaunched it marks
+  // where the reader was: a dot in the nav menu, a ribbon in the site-map.
+  // ---------------------------------------------------------------
+
+  function lastOpenedSlug() {
+    var slug = dbGet('lastOpened', null);
+    return (typeof slug === 'string' && slug) ? slug : null;
+  }
+
+  function buildRibbon(text, isContinue) {
+    var ribbon = document.createElement('span');
+    ribbon.className = isContinue ? 'ribbon ribbon-continuar' : 'ribbon';
+    ribbon.textContent = text;
+    return ribbon;
+  }
+
+  function markContinue() {
+    if (!navDropdown) return;
+
+    Array.prototype.forEach.call(navDropdown.querySelectorAll('.has-dot'), function (el) {
+      el.classList.remove('has-dot');
+    });
+
+    var slug = lastOpenedSlug();
+    if (!slug) return;
+
+    Array.prototype.forEach.call(navDropdown.querySelectorAll('a[data-slug]'), function (link) {
+      if (link.getAttribute('data-slug') !== slug) return;
+
+      link.classList.add('has-dot');
+
+      // Also flag the folder, so the dot is visible while it is collapsed.
+      var folder = link.closest('.nav-folder-item');
+      var toggle = folder && folder.querySelector('.nav-folder-toggle');
+      if (toggle) toggle.classList.add('has-dot');
+    });
+  }
+
+  markContinue();
+
   function closeAllNavFolders() {
     if (!navDropdown) return;
 
@@ -553,6 +602,11 @@
       e.preventDefault();
 
       var slug = link.getAttribute('data-slug');
+
+      if (slug === window.Router.getCurrentSlug()) {
+        closeMenu();
+        return;
+      }
 
       openedFromSearch = false;
       // The dropdown now shows a menu-only label that can differ from
@@ -723,8 +777,17 @@
         'p:not(.subtitle), li, blockquote'
       );
 
+      function textWithoutTooltips(el) {
+        var clone = el.cloneNode(true);
+        Array.prototype.forEach.call(
+          clone.querySelectorAll('.gloss-tooltip-content'),
+          function (n) { n.parentNode.removeChild(n); }
+        );
+        return clone.textContent.trim();
+      }
+
       for (var i = 0; i < previewNodes.length; i++) {
-        var candidate = previewNodes[i].textContent.trim();
+        var candidate = textWithoutTooltips(previewNodes[i]);
         if (candidate) {
           previewText = candidate;
           break;
@@ -732,7 +795,7 @@
       }
 
       if (!previewText) {
-        previewText = inner.textContent.trim();
+        previewText = textWithoutTooltips(inner);
       }
 
       preview.textContent = previewText;
@@ -880,7 +943,8 @@
 
     if (
       parent.closest('#templateSearchModal') ||
-      parent.closest('.accordion-chevron')
+      parent.closest('.accordion-chevron') ||
+      parent.closest('.accordion-preview')
     ) {
       return false;
     }
@@ -940,7 +1004,7 @@
         .replace(/ñ/g, '__ntilde__')
         .replace(/Ñ/g, '__ntilde__')
         .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
+        .replace(COMBINING_MARKS_RE, '')
         .replace(/__ntilde__/g, 'ñ')
         .toLowerCase();
 
@@ -1771,6 +1835,10 @@
         return;
       }
 
+      // Only a double-click on a heading means "toggle all"; anywhere else
+      // (e.g. double-click to select a word) must be left alone.
+      if (!e.target.closest('.accordion-toggle')) return;
+
       clearTimeout(accordionClickTimer);
       e.preventDefault();
       toggleAllAccordions(accordionRoot());
@@ -1806,13 +1874,9 @@
       e.preventDefault();
 
       var slug = openBtn.getAttribute('data-slug');
-      var entry = null;
-      for (var i = 0; i < searchData.length; i++) {
-        if (searchData[i].slug === slug) { entry = searchData[i]; break; }
-      }
 
       openedFromSearch = true;
-      pendingNavTitle = entry ? entry.title : slug;
+      pendingNavTitle = titleForSlug(slug) || slug;
       window.Router.navigateTo(slug);
     });
 
@@ -1940,10 +2004,262 @@
   // ---------------------------------------------------------------
 
   function titleForSlug(slug) {
+    // SITE_MAP is inline in index.html, so this works before the search
+    // index has been fetched.
+    var map = window.SITE_MAP;
+    if (map) {
+      var groups = (map.folders || [])
+        .map(function (f) { return f.entries; })
+        .concat([map.orphans || []]);
+
+      for (var g = 0; g < groups.length; g++) {
+        for (var e = 0; e < groups[g].length; e++) {
+          if (groups[g][e].slug === slug) return groups[g][e].title;
+        }
+      }
+    }
+
     for (var i = 0; i < searchData.length; i++) {
       if (searchData[i].slug === slug) return searchData[i].title;
     }
     return null;
+  }
+
+  // ---------------------------------------------------------------
+  // Reading position (per presentation)
+  //
+  // Saves which block sits at the top of the viewport (its index in the
+  // document's block list + how far into it) and which accordion sections
+  // are open. Anchoring to a block instead of a raw scrollY survives font
+  // swaps, reflow and sections that were collapsed when the page reloaded.
+  // ---------------------------------------------------------------
+
+  var READING_KEY = 'reading';
+  var READING_MAX_ENTRIES = 40;
+  var READING_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+  var READING_MIN_SCROLL = 200; // px: above this there is nothing worth resuming
+  var READING_BLOCKS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,verse,pre,figure';
+
+  var readingSlug = null;        // slug on screen AND already restored; null = do not save
+  var readingUserMoved = false;  // true once the reader scrolls/taps after a restore
+  var readingRestoreToken = 0;
+
+  // The app restores position itself; stop the browser competing with it.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+  function readingMap() {
+    var map = dbGet(READING_KEY, {});
+    return (map && typeof map === 'object' && !Array.isArray(map)) ? map : {};
+  }
+
+  function isValidReading(rec) {
+    return !!rec &&
+      typeof rec.n === 'number' && typeof rec.f === 'number' &&
+      typeof rec.c === 'number' && typeof rec.t === 'number' &&
+      Array.isArray(rec.o) &&
+      (Date.now() - rec.t) < READING_MAX_AGE_MS;
+  }
+
+  function getReadingRecord(slug) {
+    var map = readingMap();
+    return (Object.prototype.hasOwnProperty.call(map, slug) && isValidReading(map[slug]))
+      ? map[slug]
+      : null;
+  }
+
+  function latestReadingSlug() {
+    var map = readingMap();
+    var best = null;
+    var bestT = 0;
+
+    Object.keys(map).forEach(function (slug) {
+      var rec = map[slug];
+      if (isValidReading(rec) && rec.t > bestT && titleForSlug(slug)) {
+        best = slug;
+        bestT = rec.t;
+      }
+    });
+
+    return best;
+  }
+
+  function readingBlocks() {
+    var root = accordionRoot();
+    return root ? Array.prototype.slice.call(root.querySelectorAll(READING_BLOCKS)) : [];
+  }
+
+  function readingTop() {
+    var header = document.getElementById('site-header');
+    return header ? header.getBoundingClientRect().bottom : 0;
+  }
+
+  function accordionHeadings() {
+    return Array.prototype.filter.call(accordionRoot().children, isHeading)
+      .filter(function (h) { return h.classList.contains('accordion-toggle'); });
+  }
+
+  function saveReadingPosition() {
+    if (!readingSlug) return;
+
+    var map = readingMap();
+
+    if (window.pageYOffset < READING_MIN_SCROLL) {
+      // Back at the very start: nothing worth resuming.
+      if (!Object.prototype.hasOwnProperty.call(map, readingSlug)) return;
+      delete map[readingSlug];
+      dbSet(READING_KEY, map);
+      return;
+    }
+
+    var blocks = readingBlocks();
+    if (!blocks.length) return;
+
+    var top = readingTop();
+    var anchor = blocks.length - 1; // scrolled past everything: anchor on the last block
+    var frac = 1;
+
+    for (var i = 0; i < blocks.length; i++) {
+      // Collapsed sections are clipped but still laid out; skip them.
+      if (blocks[i].closest('.accordion-body.is-collapsed')) continue;
+
+      var r = blocks[i].getBoundingClientRect();
+      if (r.height > 0 && r.bottom > top + 1) {
+        anchor = i;
+        frac = Math.min(1, Math.max(0, (top - r.top) / r.height));
+        break;
+      }
+    }
+
+    var open = [];
+    accordionHeadings().forEach(function (h, idx) {
+      if (h.getAttribute('aria-expanded') !== 'false') open.push(idx);
+    });
+
+    map[readingSlug] = {
+      n: anchor,
+      f: Math.round(frac * 1000) / 1000,
+      o: open,
+      c: blocks.length,
+      t: Date.now()
+    };
+
+    var slugs = Object.keys(map);
+    if (slugs.length > READING_MAX_ENTRIES) {
+      slugs.sort(function (a, b) {
+        return ((map[a] && map[a].t) || 0) - ((map[b] && map[b].t) || 0);
+      });
+      slugs.slice(0, slugs.length - READING_MAX_ENTRIES).forEach(function (s) {
+        delete map[s];
+      });
+    }
+
+    dbSet(READING_KEY, map);
+  }
+
+  function applyReadingPosition(rec) {
+    var block = readingBlocks()[rec.n];
+    if (!block) return false;
+
+    var r = block.getBoundingClientRect();
+    window.scrollTo(0, window.pageYOffset + r.top - readingTop() + rec.f * r.height);
+    return true;
+  }
+
+  function restoreReadingPosition(slug) {
+    var rec = getReadingRecord(slug);
+
+    // Missing, or the presentation was regenerated since it was saved.
+    if (!rec || rec.c !== readingBlocks().length) return false;
+
+    var heads = accordionHeadings();
+
+    heads.forEach(function (h, idx) {
+      var body = getAccordionBody(h);
+      if (!body) return;
+
+      var open = rec.o.indexOf(idx) !== -1;
+      h.setAttribute('aria-expanded', open ? 'true' : 'false');
+      body.style.transition = 'none'; // jump, don't animate
+      body.classList.toggle('is-collapsed', !open);
+    });
+
+    void contentEl.offsetHeight; // commit that layout before measuring
+
+    heads.forEach(function (h) {
+      var body = getAccordionBody(h);
+      if (body) body.style.transition = '';
+    });
+
+    if (!applyReadingPosition(rec)) return false;
+
+    var token = ++readingRestoreToken;
+    readingUserMoved = false;
+
+    // Fonts settling after the swap shift the layout: re-anchor once more,
+    // but only if the reader hasn't touched anything since.
+    requestAnimationFrame(function () {
+      if (!document.fonts || !document.fonts.ready) return;
+
+      document.fonts.ready.then(function () {
+        if (token === readingRestoreToken && readingSlug === slug && !readingUserMoved) {
+          applyReadingPosition(rec);
+        }
+      });
+    });
+
+    return true;
+  }
+
+  ['wheel', 'touchmove', 'keydown', 'pointerdown'].forEach(function (type) {
+    window.addEventListener(type, function () { readingUserMoved = true; }, { passive: true });
+  });
+
+  var debouncedSaveReading = debounce(saveReadingPosition, 400);
+
+  window.addEventListener('scroll', function () {
+    if (readingSlug) debouncedSaveReading();
+  }, { passive: true });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) saveReadingPosition();
+  });
+
+  window.addEventListener('pagehide', saveReadingPosition);
+
+  // "Continue reading" card, rendered into #searchResults while no search
+  // is active. Reuses the search-result group markup and its OPEN button.
+  function renderContinueReading(resultsEl) {
+    if (!resultsEl || resultsEl.querySelector('.search-group')) return;
+
+    var slug = latestReadingSlug();
+    if (!slug) return;
+
+    var group = buildGroupEl({
+      entry: { slug: slug, title: titleForSlug(slug) },
+      bulletpoints: [],
+      note: null
+    }, 'shade-a');
+
+    // buildGroupEl puts the presentation title in the heading style; here that
+    // style is for "Continuar leyendo", and the title moves to the row with ABRIR.
+    var row = group.querySelector('.search-group-top');
+    var oldTitle = row.querySelector('.search-group-title');
+
+    var current = document.createElement('span');
+    current.className = 'search-group-current';
+    current.textContent = oldTitle.textContent;
+    row.replaceChild(current, oldTitle);
+
+    var heading = document.createElement('div');
+    heading.className = 'search-group-top';
+
+    var headingTitle = document.createElement('h6');
+    headingTitle.className = 'search-group-title';
+    headingTitle.textContent = 'Continuar leyendo';
+    heading.appendChild(headingTitle);
+
+    group.insertBefore(heading, row);
+    resultsEl.appendChild(group);
   }
 
   function loadTemplate(slug, title) {
@@ -1960,15 +2276,21 @@
 
     closeGlossTooltip();
     stopSlideshow();
+    teardownReveal();
     teardownResultsObserver();
     sitemapOpen = false; // guard: prevents backBtn's sitemapOpen branch
                           // from misfiring after navigating out of the
                           // welcome view into an actual template
     document.documentElement.classList.add('is-template-view');
 
-    var templatePath = (window.TEMPLATE_PATHS && window.TEMPLATE_PATHS[slug]) || (slug + '.html');
+    var knownPaths = window.TEMPLATE_PATHS || {};
+    var templatePath = Object.prototype.hasOwnProperty.call(knownPaths, slug)
+      ? knownPaths[slug]
+      : (/^[a-z0-9-]+$/.test(slug) ? slug + '.html' : null);
 
-    fetch('templates/' + templatePath, { signal: templateAbortController.signal })
+    (templatePath
+      ? fetch('templates/' + templatePath, { signal: templateAbortController.signal })
+      : Promise.reject(new Error('Slug no válido: ' + slug)))
       .then(function (r) {
         if (!r.ok) throw new Error('Falló en cargar correctamente ' + slug);
         return r.text();
@@ -1980,12 +2302,19 @@
           contentEl.innerHTML = fragment;
 
           initAccordions(accordionRoot());
+          initOfflineImages(contentEl);
+
+          dbSet('lastOpened', slug);
+          markContinue();
 
           clearTemplateSearchHighlights();
           updateTemplateSearchControls();
 
           contentEl.scrollTop = 0;
-          window.scrollTo(0, 0);
+          if (!restoreReadingPosition(slug)) window.scrollTo(0, 0);
+          readingSlug = slug;
+
+          initReveal(accordionRoot());
 
           setNavTitle(title || slug);
           if (backBtn) backBtn.style.display = '';
@@ -2023,6 +2352,8 @@
     exitContentThen(function () {
       closeGlossTooltip();
       teardownResultsObserver();
+      currentTemplateSlug = null;
+      teardownReveal();
       openedFromSearch = false;
       stopFooterMarquee();
 
@@ -2063,6 +2394,206 @@
       // is decided by openedFromSearch inside the Router.onRouteChange
       // callback below, exactly as before.
       window.Router.goHome();
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Geek Stats scroll fade
+  //
+  // Scroll-linked, not time-based. Progress 0 = card at rest; progress 1 =
+  // the moment #content-body reaches the bottom of the top nav. In between
+  // the card fades out and slides left until its right edge touches the
+  // left border of #content. Scrolling back up plays it in reverse.
+  // Only opacity/transform are written (no layout work), one update per frame.
+  // ---------------------------------------------------------------
+
+  var statsFadeFrame = 0;
+  var statsReduceMotion = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null;
+
+  function updateStatsFade() {
+    statsFadeFrame = 0;
+
+    var card = contentEl && contentEl.querySelector('.geek-stats');
+    var article = contentEl && contentEl.querySelector('#content-body');
+    var header = document.getElementById('site-header');
+    if (!card || !article || !header) return;
+
+    var scrollY = window.pageYOffset;
+
+    // Scroll distance at which #content-body's top meets the nav's bottom.
+    var distance = article.getBoundingClientRect().top + scrollY -
+                   header.getBoundingClientRect().bottom;
+
+    var progress = distance > 0 ? Math.min(1, Math.max(0, scrollY / distance)) : 1;
+
+    if (progress === 0) {
+      card.style.opacity = '';
+      card.style.transform = '';
+      return;
+    }
+
+    // The card is centered in #content, so its right edge sits (W + w) / 2
+    // from the content's left border, where W = content width, w = card width.
+    var shift = (contentEl.clientWidth + card.offsetWidth) / 2;
+    var slide = (statsReduceMotion && statsReduceMotion.matches) ? 0 : -progress * shift;
+
+    card.style.opacity = String(1 - progress);
+    card.style.transform = 'translateX(' + slide + 'px)';
+  }
+
+  function scheduleStatsFade() {
+    if (!statsFadeFrame) statsFadeFrame = requestAnimationFrame(updateStatsFade);
+  }
+
+  window.addEventListener('scroll', scheduleStatsFade, { passive: true });
+  window.addEventListener('resize', scheduleStatsFade);
+
+  // ---------------------------------------------------------------
+  // Scroll reveal: verse, blockquote (definitions later)
+  //
+  // Scroll-linked, like the Geek Stats card. Layout space is always reserved
+  // (only opacity/transform are written). For each item:
+  //   enter: starts when its top touches the bottom of the screen and is
+  //          complete once its first REVEAL_ENTER_LINES lines are visible;
+  //          it slides in from the left edge of #content.
+  //   exit:  only over its LAST line(s), so a tall item stays fully in place
+  //          while its beginning scrolls away, and is never faded while the
+  //          reader is still in the middle of it; it slides out to the right.
+  // Small screens (<= 600px) and prefers-reduced-motion: fade only, no slide.
+  //
+  // At rest NO transform/opacity is written: a transformed ancestor would
+  // become the containing block of the position:fixed gloss tooltips inside.
+  // Deliberately not an IntersectionObserver: an item that has slid out of
+  // #content's clip box would count as "not intersecting" and never wake up.
+  // ---------------------------------------------------------------
+
+  var REVEAL_SELECTOR = 'verse, blockquote, p.definition';
+  var REVEAL_ENTER_LINES = 2;
+  var REVEAL_EXIT_LINES = 1;
+  var REVEAL_MAX_VIEWPORT_FRACTION = 0.3;    // a ramp never spans more than this share of the screen
+
+  var revealItems = [];
+  var revealFrame = 0;
+  var revealKeepAliveUntil = 0;
+  var revealCompact = window.matchMedia ? window.matchMedia('(max-width: 600px)') : null;
+
+  function clamp01(n) { return n < 0 ? 0 : (n > 1 ? 1 : n); }
+
+  function updateReveal() {
+    if (!revealItems.length || !contentEl) return;
+
+    var header = document.getElementById('site-header');
+    var navBottom = header ? header.getBoundingClientRect().bottom : 0;
+    var viewH = window.innerHeight;
+    var contentW = contentEl.clientWidth;
+    var compact = !!(revealCompact && revealCompact.matches);
+    var noSlide = compact || !!(statsReduceMotion && statsReduceMotion.matches);
+
+    var rows = [];
+    var i;
+
+    // Read phase: no writes, so layout is computed only once.
+    for (i = 0; i < revealItems.length; i++) {
+      var el = revealItems[i];
+      var r = el.getBoundingClientRect();
+      var pIn;
+      var pOut;
+
+      if (r.top >= viewH) {               // still below the screen
+        pIn = 0; pOut = 0;
+      } else if (r.bottom <= navBottom) { // already above the nav
+        pIn = 1; pOut = 1;
+      } else {
+        var cs = window.getComputedStyle(el);
+        var lineH = parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) * 1.5);
+        var cap = viewH * REVEAL_MAX_VIEWPORT_FRACTION;
+
+        var inZone = Math.max(1, Math.min(
+          (compact ? 1 : REVEAL_ENTER_LINES) * lineH + (parseFloat(cs.paddingTop) || 0),
+          r.height, cap
+        ));
+        var outZone = Math.max(1, Math.min(
+          REVEAL_EXIT_LINES * lineH + (parseFloat(cs.paddingBottom) || 0),
+          r.height, cap
+        ));
+
+        pIn = clamp01((viewH - r.top) / inZone);
+        pOut = clamp01((navBottom + outZone - r.bottom) / outZone);
+      }
+
+      var rest = (pIn === 1 && pOut === 0);
+
+      rows.push({
+        el: el,
+        pIn: pIn,
+        pOut: pOut,
+        rest: rest,
+        width: (rest || noSlide) ? 0 : el.offsetWidth
+      });
+    }
+
+    // Write phase.
+    for (i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var opacity = '';
+      var transform = '';
+
+      if (!row.rest) {
+        opacity = String(Math.round(row.pIn * (1 - row.pOut) * 1000) / 1000);
+
+        if (!noSlide) {
+          var x = row.pOut - (1 - row.pIn); // -1 left .. 0 rest .. +1 right
+          transform = 'translateX(' + Math.round(x * (contentW + row.width) / 2) + 'px)';
+        }
+      }
+
+      if (row.el.__rvO !== opacity) { row.el.style.opacity = opacity; row.el.__rvO = opacity; }
+      if (row.el.__rvT !== transform) { row.el.style.transform = transform; row.el.__rvT = transform; }
+    }
+  }
+
+  function scheduleReveal() {
+    if (!revealItems || !revealItems.length || revealFrame) return;
+
+    revealFrame = requestAnimationFrame(function () {
+      revealFrame = 0;
+      updateReveal();
+      if (performance.now() < revealKeepAliveUntil) scheduleReveal();
+    });
+  }
+
+  function keepRevealUpdating(ms) {
+    revealKeepAliveUntil = performance.now() + ms;
+    scheduleReveal();
+  }
+
+  function teardownReveal() {
+    if (revealFrame) cancelAnimationFrame(revealFrame);
+    revealFrame = 0;
+    revealKeepAliveUntil = 0;
+    revealItems = [];
+  }
+
+  function initReveal(root) {
+    teardownReveal();
+    if (!root) return;
+
+    revealItems = Array.prototype.slice.call(root.querySelectorAll(REVEAL_SELECTOR));
+    updateReveal(); // correct state before the first paint
+  }
+
+  window.addEventListener('scroll', scheduleReveal, { passive: true });
+  window.addEventListener('resize', scheduleReveal);
+
+  // Accordion sections animate their height without any scroll event:
+  // keep the items in step while it runs.
+  if (contentEl) {
+    ['transitionrun', 'transitionend'].forEach(function (type) {
+      contentEl.addEventListener(type, function (e) {
+        if (e.propertyName === 'grid-template-rows') keepRevealUpdating(450);
+      });
     });
   }
 
@@ -2180,11 +2711,28 @@
     });
   }
 
+  // Re-measure both marquees when the viewport WIDTH changes (rotation,
+  // window resize). Height-only changes (mobile URL bar, keyboard) are
+  // ignored, otherwise the animation would restart on every scroll.
+  var lastViewportWidth = window.innerWidth;
+
+  window.addEventListener('resize', debounce(function () {
+    if (window.innerWidth === lastViewportWidth) return;
+    lastViewportWidth = window.innerWidth;
+
+    setNavTitle(navTitleEl ? navTitleEl.textContent : DEFAULT_TITLE);
+
+    if (document.documentElement.classList.contains('is-template-view')) {
+      initFooterMarquee();
+    }
+  }, 200));
+
   // Single choke point for every place that sets the nav title, so
   // teardown-before-measure can never be forgotten at a call site.
   function setNavTitle(text) {
     teardownNavTitleMarquee();
     if (navTitleEl) navTitleEl.textContent = text;
+    document.title = (text && text !== DEFAULT_TITLE) ? text + ' · ' + DEFAULT_TITLE : DEFAULT_TITLE;
     initNavTitleMarquee();
   }
 
@@ -2220,6 +2768,10 @@
 
   var SLIDE_DURATION_MS = 9200; // how long each slide stays on screen
   var slideTimer = null;
+  var slideTick = null;         // interval callback, kept so a pause can re-arm it
+  var slideFrame = null;        // current .ken-burns-frame node
+  var slideFrameVisible = false;
+  var slideObserver = null;
 
   // Parses "Título | Texto" into {heading, body}; with no "|" the whole
   // string becomes a title-only caption.
@@ -2296,19 +2848,58 @@
 
     if (SLIDES.length < 2) return; // nothing to cycle to
 
-    slideTimer = setInterval(function () {
+    slideTick = function () {
       i = (i + 1) % SLIDES.length;
       setSlide(back, SLIDES[i]);
       back.classList.add('slide-visible');
       front.classList.remove('slide-visible');
       var tmp = front; front = back; back = tmp;
       preloadNext(i);
-    }, SLIDE_DURATION_MS);
+    };
+
+    slideFrame = wrapper;
+    slideFrameVisible = true; // optimistic until the observer reports
+
+    // Run only while the frame is really on screen (not hidden by search
+    // results, not scrolled away) AND the page is visible.
+    if (typeof IntersectionObserver !== 'undefined') {
+      slideObserver = new IntersectionObserver(function (entries) {
+        slideFrameVisible = entries[entries.length - 1].isIntersecting;
+        syncSlideshow();
+      });
+      slideObserver.observe(wrapper);
+    }
+
+    syncSlideshow();
   }
+
+  function syncSlideshow() {
+    if (!slideTick || !slideFrame) return;
+
+    var shouldRun = slideFrameVisible && !document.hidden;
+
+    slideFrame.classList.toggle('is-paused', !shouldRun);
+
+    if (shouldRun && !slideTimer) {
+      slideTimer = setInterval(slideTick, SLIDE_DURATION_MS);
+    } else if (!shouldRun && slideTimer) {
+      clearInterval(slideTimer);
+      slideTimer = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', syncSlideshow);
 
   function stopSlideshow() {
     clearInterval(slideTimer);
     slideTimer = null;
+    slideTick = null;
+    slideFrame = null;
+
+    if (slideObserver) {
+      slideObserver.disconnect();
+      slideObserver = null;
+    }
   }
 
   // ---------------------------------------------------------------
@@ -2330,13 +2921,20 @@
   var resultsObserver = null;   // IntersectionObserver driving lazy-load
   var sitemapOpen = false;      // true while the "Tabla de Contenido" view is showing
 
+  var searchIndexFailed = false; // true once the index fetch has definitively failed
+
   fetch('templates/search-index.json')
-    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      if (!r.ok) throw new Error('search-index.json: HTTP ' + r.status);
+      return r.json();
+    })
     .then(function (data) {
       searchData = (data && data.entries) || [];
 
       if (typeof Fuse === 'undefined') {
         console.error('[app] El fuse.min.js no cargó: se ha obtenido el archivo search-index.json, pero la búsqueda está desactivada.');
+        searchIndexFailed = true;
+        if (lastQuery) runSearch(lastQuery);
         return;
       }
 
@@ -2382,6 +2980,8 @@
     })
     .catch(function (err) {
       console.error('[app] No se pudo cargar el search-index.json:', err);
+      searchIndexFailed = true;
+      if (lastQuery) runSearch(lastQuery);
       var resultsEl = document.getElementById('searchResults');
       if (resultsEl && isFileProtocol()) {
         resultsEl.innerHTML = '<p class="search-empty">Búsqueda necesita un servidor web local: ejecuta <code>python -m http.server 8000</code> en esta carpeta y, luego, abre: http://localhost:8000/.</p>';
@@ -2677,13 +3277,16 @@
 
     if (q.length < MIN_QUERY_LENGTH) {
       if (defaultImg) defaultImg.style.display = '';
+      renderContinueReading(resultsEl);
       return;
     }
 
     if (defaultImg) defaultImg.style.display = 'none';
 
     if (!fuseTitle || !fuseContent) {
-      resultsEl.innerHTML = '<p class="search-empty">Cargando el índice de búsqueda...</p>';
+      resultsEl.innerHTML = searchIndexFailed
+        ? '<p class="search-empty">No se pudo cargar el índice de búsqueda. Revisa tu conexión y recarga la página.</p>'
+        : '<p class="search-empty">Cargando el índice de búsqueda...</p>';
       return;
     }
 
@@ -2727,6 +3330,9 @@
     var list = document.createElement('ul');
     list.className = 'search-group-bullets';
 
+    var newSlug = window.SITE_MAP ? window.SITE_MAP['new'] : null;
+    var continueSlug = lastOpenedSlug();
+
     groupEntries.forEach(function (entry) {
       var li = document.createElement('li');
       var link = document.createElement('a');
@@ -2735,6 +3341,13 @@
       link.setAttribute('data-slug', entry.slug);
       link.textContent = entry.title;
       li.appendChild(link);
+
+      // NUEVO: the most recent presentation (chosen by generate_site.py).
+      // CONTINUAR: the last one opened; it stacks above NUEVO if both apply.
+      if (entry.slug === newSlug) li.appendChild(buildRibbon('NUEVO', false));
+      if (entry.slug === continueSlug) li.appendChild(buildRibbon('CONTINUAR', true));
+      if (entry.slug === newSlug || entry.slug === continueSlug) li.classList.add('has-ribbon');
+
       list.appendChild(li);
     });
 
@@ -2778,21 +3391,24 @@
     resultsEl.appendChild(frag);
   }
 
-  if (sitemapTrigger) {
-    sitemapTrigger.addEventListener('click', function (e) {
-      e.preventDefault();
+  function toggleSitemap(e) {
+    e.preventDefault();
 
-      sitemapOpen = !sitemapOpen;
+    sitemapOpen = !sitemapOpen;
 
-      if (sitemapOpen) {
-        renderSitemap();
-        if (backBtn) backBtn.style.display = '';
-      } else {
-        runSearch('');
-        if (backBtn) backBtn.style.display = 'none';
-      }
-    });
+    if (sitemapOpen) {
+      renderSitemap();
+      if (backBtn) backBtn.style.display = '';
+    } else {
+      runSearch('');
+      if (backBtn) backBtn.style.display = 'none';
+    }
   }
+
+  // Two buttons, one behavior: the footer one and its twin in the top nav.
+  [sitemapTrigger, document.getElementById('sitemapTriggerTop')].forEach(function (btn) {
+    if (btn) btn.addEventListener('click', toggleSitemap);
+  });
 
   // Restores the welcome view and re-runs the last query, instead of going
   // fully home — used when the back button is pressed after opening a
@@ -2809,6 +3425,8 @@
     exitContentThen(function () {
       closeGlossTooltip();
       stopFooterMarquee();
+      currentTemplateSlug = null;
+      teardownReveal();
 
       _applyContentEditable(false);
       _applyOutlines(false);
@@ -2844,6 +3462,8 @@
     var clearBtn = document.getElementById('searchClearBtn');
 
     if (!input) return;
+
+    renderContinueReading(document.getElementById('searchResults'));
 
     input.addEventListener('input', function (e) {
       var val = e.target.value;
@@ -2946,6 +3566,17 @@
   var initialSlugFromHash = window.Router.getCurrentSlug();
 
   window.Router.onRouteChange(function (slug) {
+    closeMenu();
+    closeGlossTooltip();
+    if (codeLightbox && codeLightbox.classList.contains('is-open')) closeCodeLightbox();
+    if (templateSearchModal && templateSearchModal.classList.contains('is-open')) closeTemplateSearch();
+
+    // Flush the position of the presentation we're leaving while its content
+    // is still on screen; nothing is saved again until the next one has been
+    // rendered and restored.
+    saveReadingPosition();
+    readingSlug = null;
+
     if (slug) {
       var title = pendingNavTitle != null ? pendingNavTitle : (titleForSlug(slug) || slug);
       pendingNavTitle = null;
@@ -2970,4 +3601,210 @@
     // subsequent template open/close feel like one consistent system.
     swapContentWithTransition(function () {});
   }
+
+  // ---------------------------------------------------------------
+  // Offline-safe images
+  //
+  // Any presentation image that fails to load (deleted from imgcatch to
+  // stay under the size cap, or a remote image while offline) is swapped
+  // for a note, and retried automatically when the connection returns.
+  // ---------------------------------------------------------------
+
+  var IMG_OFFLINE_TEXT = 'Esta imagen estará visible cuando haya conexión a internet nuevamente.';
+
+  function markImageOffline(img) {
+    var figure = img.closest('figure.presentation-image');
+    if (!figure || figure.classList.contains('is-offline')) return;
+
+    figure.classList.add('is-offline');
+
+    var note = document.createElement('div');
+    note.className = 'img-offline-note';
+    note.textContent = IMG_OFFLINE_TEXT;
+    img.insertAdjacentElement('afterend', note);
+  }
+
+  function initOfflineImages(root) {
+    if (!root) return;
+
+    var images = root.querySelectorAll('figure.presentation-image img');
+
+    Array.prototype.forEach.call(images, function (img) {
+      img.addEventListener('error', function () { markImageOffline(img); });
+    });
+  }
+
+  window.addEventListener('online', function () {
+    if (!contentEl) return;
+
+    var figures = contentEl.querySelectorAll('figure.presentation-image.is-offline');
+
+    Array.prototype.forEach.call(figures, function (figure) {
+      var note = figure.querySelector('.img-offline-note');
+      var img = figure.querySelector('img');
+
+      if (note) note.remove();
+      figure.classList.remove('is-offline');
+
+      if (img) {
+        var src = img.getAttribute('src');
+        img.removeAttribute('src');
+        img.setAttribute('src', src);
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Service worker / PWA update control
+  //
+  // The banner markup lives inside #welcome-view, so it is destroyed and
+  // restored together with WELCOME_HTML. Its state therefore lives here,
+  // and renderSwBanner() repaints it every time the welcome view is built.
+  // ---------------------------------------------------------------
+
+  var SW_TEXT = {
+    idle:        { btn: 'Buscar actualización', msg: 'Comprueba si hay una versión más reciente.' },
+    checking:    { btn: 'Comprobando…',         msg: 'Buscando una versión más reciente…' },
+    downloading: { btn: 'Descargando…',         msg: 'Descargando la actualización. Un momento.' },
+    ready:       { btn: 'Actualizar ahora',     msg: 'Hay una actualización lista. La aplicación se reiniciará.' },
+    applying:    { btn: 'Instalando…',          msg: 'Aplicando la actualización…' },
+    current:     { btn: 'Estás al día',         msg: 'Ya está instalada la versión más reciente.' },
+    offline:     { btn: 'Sin conexión',         msg: 'Necesitas conexión a internet para buscar actualizaciones.' },
+    error:       { btn: 'Reintentar',           msg: 'No se pudo comprobar la actualización.' }
+  };
+
+  var SW_RESET_MS = 3000;
+
+  var swSupported = false;
+  var swRegistration = null;
+  var swMode = 'idle';
+  var swResetTimer = null;
+
+  var swUpdateBtn = document.getElementById('swUpdateBtn');
+  var swUpdateLabel = swUpdateBtn && swUpdateBtn.querySelector('.sw-update-label');
+
+  function renderSwButton() {
+    if (!swUpdateBtn || !swUpdateLabel) return;
+
+    swUpdateBtn.style.display = swSupported ? '' : 'none';
+    if (!swSupported) return;
+
+    var text = SW_TEXT[swMode] || SW_TEXT.idle;
+    var busy = swMode === 'checking' || swMode === 'downloading' || swMode === 'applying';
+
+    swUpdateLabel.textContent = text.btn;
+    swUpdateBtn.title = text.msg;
+    swUpdateBtn.setAttribute('aria-label', text.btn + '. ' + text.msg);
+    swUpdateBtn.classList.toggle('is-working', busy);
+    swUpdateBtn.classList.toggle('is-ready', swMode === 'ready');
+    swUpdateBtn.disabled = busy;
+  }
+
+  function setSwMode(mode) {
+    swMode = mode;
+    clearTimeout(swResetTimer);
+    renderSwButton();
+
+    if (mode === 'current' || mode === 'offline') {
+      swResetTimer = setTimeout(function () { setSwMode('idle'); }, SW_RESET_MS);
+    }
+  }
+
+  // Follows a new worker from "installing" to "installed" (= waiting).
+  // Ignored on the very first install: there is no older version to replace.
+  function trackInstalling(worker) {
+    if (!worker || !navigator.serviceWorker.controller) return;
+
+    setSwMode('downloading');
+
+    worker.addEventListener('statechange', function () {
+      if (worker.state === 'installed') {
+        setSwMode('ready');
+      } else if (worker.state === 'redundant' && swMode === 'downloading') {
+        setSwMode('error');
+      }
+    });
+  }
+
+  function onSwButtonClick() {
+    if (!swRegistration) return;
+
+    if (swMode === 'ready' && swRegistration.waiting) {
+      setSwMode('applying');
+      swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      return;
+    }
+
+    if (!navigator.onLine) {
+      setSwMode('offline');
+      return;
+    }
+
+    setSwMode('checking');
+
+    swRegistration.update().then(function () {
+      if (swRegistration.waiting) {
+        setSwMode('ready');
+      } else if (swRegistration.installing) {
+        // The 'updatefound' listener is already following it.
+        setSwMode('downloading');
+      } else {
+        setSwMode('current');
+      }
+    }).catch(function () {
+      setSwMode('error');
+    });
+  }
+
+  function initServiceWorker() {
+
+    if (!('serviceWorker' in navigator) || location.protocol === 'file:') {
+      return;
+    }
+
+    swSupported = true;
+    renderSwButton();
+
+    var hadController = !!navigator.serviceWorker.controller;
+    var refreshing = false;
+
+    if (swUpdateBtn) {
+      swUpdateBtn.addEventListener('click', onSwButtonClick);
+    }
+
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+
+      swRegistration = reg;
+
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        setSwMode('ready');
+      }
+
+      trackInstalling(reg.installing);
+
+      reg.addEventListener('updatefound', function () {
+        trackInstalling(reg.installing);
+      });
+
+    }).catch(function (error) {
+      console.error('[PWA] No se pudo registrar sw.js:', error);
+    });
+
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+
+      // First install: the new worker claims the page, nothing to reload.
+      if (!hadController) {
+        hadController = true;
+        return;
+      }
+
+      if (refreshing) return;
+
+      refreshing = true;
+      window.location.reload();
+    });
+  }
+
+  initServiceWorker();
+
 })();

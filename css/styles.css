@@ -834,6 +834,7 @@ html.is-template-view .footer-home-text     { display: none; }
 }
 
 #sitemapTrigger { display: inline-flex; }
+html.is-template-view #sitemapTriggerTop { display: none; }
 
 /* ---- Dev controls ---- */
 
@@ -1081,7 +1082,7 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
 .search-group-title {
   margin: 0;
   padding-left: 0;
-  color: var(--ink);
+  color: var(--muted);
   font-family: var(--font-serif);
   font-size: 1.15rem;
   font-weight: 700;
@@ -1173,6 +1174,85 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
 
 .search-sentinel { height: 1px; }
 
+/* "Continuar leyendo" card: heading row, then presentation title + ABRIR */
+.search-group-top + .search-group-top { margin-top: 8px; }
+
+.search-group-current {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere; /* long titles wrap; ABRIR stays on the right */
+}
+
+/* ---- Ribbons (Tabla de Contenido) and continue dot (nav menu) ---- */
+
+.search-group-bullets li.has-ribbon { padding-right: 92px; }
+
+.ribbon {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  padding: 2px 8px 0px 16px;
+  background: red;
+  border-right: 3px solid var(--white);
+  box-shadow: 0 8px 0 var(--shadow-dark);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  pointer-events: none;
+  clip-path: polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 2px 50%);
+}
+
+.ribbon-continuar {
+  background: var(--white);
+  color: var(--code-bg);
+  clip-path: polygon(10% 0, 100% 0, 100% 100%, 10% 100%, 2px 50%);
+  z-index: 2; /* over "NUEVO" when both belong to the same entry */
+}
+
+/* Corner ribbon: a plain rectangle rotated 45°, cropped by the parent */
+.ribbon-diccionario {
+  position: absolute;
+  top: 23px;
+  right: -37px;
+  width: 140px;
+
+  background: var(--jade);
+  color: #06222B;
+
+  font-family: var(--font-sans);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+
+  padding: 2px 0;
+
+  transform: rotate(45deg);
+
+  box-shadow: 0 2px 8px var(--shadow-dark);
+  z-index: 1;
+}
+
+.has-dot::after {
+  content: "";
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--cyan);
+}
+
+html.is-template-view .has-dot::after { display: none; }
+
 .search-empty { text-align: center; opacity: 0.6; padding: 20px; font-family: var(--font-sans); }
 
 .default-img-wrap {
@@ -1240,6 +1320,8 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
   to   { transform: scale(var(--kb-scale)) translate(var(--kb-pan-x), var(--kb-pan-y)); }
 }
 
+.ken-burns-frame.is-paused .ken-burns { animation-play-state: paused; }
+
 @media (prefers-reduced-motion: reduce) {
   .ken-burns { animation: none; }
 }
@@ -1305,12 +1387,14 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
   box-sizing: border-box;
   touch-action: manipulation;
   background: var(--bg);
+  overflow-x: hidden; /* fallback for Safari < 16, which has no "clip" */
+  overflow-x: clip;   /* clip at #content's edges without making it a scroll container */
   transition: transform 0.3s ease, opacity 0.3s ease;
   font-size: 17px; /* base — scaled live by #fontIncBtn/#fontDecBtn inline style */
 }
 
 #content-body {
-  padding: 22px var(--page-pad) 40px;
+  padding: 0 var(--page-pad) 40px;
 }
 
 #content p {
@@ -1654,6 +1738,10 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
   max-width: none;
 }
 
+/* The Geek Stats card above the content provides the only separation:
+   nothing inside #content-body may add space above its first element. */
+#content-body > :first-child { margin-top: 0 !important; }
+
 #content-body > h1.accordion-toggle,
 #content-body > h2.accordion-toggle,
 #content-body > h3.accordion-toggle,
@@ -1753,7 +1841,19 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
 
 .accordion-body.is-collapsed { grid-template-rows: 0fr; opacity: 0; }
 
-.accordion-body-inner { overflow: hidden; min-height: 0; }
+.accordion-body-inner {
+  overflow: hidden;
+  min-height: 0;
+  /* Extend the clip box to #content's edges (#content-body pads 32px, 16px on
+     mobile) so items sliding in from the side emerge from the page column's
+     edge, not from the text column's. */
+  margin: 0 -32px;
+  padding: 0 32px;
+}
+
+@media (max-width: 600px) {
+  .accordion-body-inner { margin: 0 -16px; padding: 0 16px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .accordion-body, .accordion-chevron { transition: none; }
@@ -1952,7 +2052,7 @@ html.is-template-view .footer-author.geek-stats { display: flex; margin: 28px au
 
   .nav-menu-btn { font-size: 0.9rem; max-width: 46vw; }
 
-  #content-body { padding: 18px 16px 34px; }
+  #content-body { padding: 0 16px 34px; }
 
   #content p { font-size: 1.05em; }
 
@@ -2004,6 +2104,7 @@ html.code-lightbox-active body { overflow: hidden; }
 
   width: min(96vw, 1200px);
   height: calc(100vh - 100px);
+  height: calc(100dvh - 100px);
   margin: 68px auto 20px;
 
   background: var(--code-bg);
@@ -2113,6 +2214,7 @@ html.code-lightbox-active body { overflow: hidden; }
   .code-lightbox-panel {
     width: 100vw;
     height: calc(100vh - 76px);
+    height: calc(100dvh - 76px);
     margin: 58px auto 18px;
     border-radius: 0;
   }
@@ -2247,3 +2349,67 @@ html {
   transition: background-color var(--transition-fast);
 }
 *::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+/* ================================================================
+   PWA UPDATE BANNER + OFFLINE IMAGES
+   (re-uses .search-group / .search-group-open-btn / .search-group-note)
+   ================================================================ */
+
+/* Footer update button — sits left of "Tabla de Contenido" */
+.footer-home-text.footer-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* the mobile rule ".back-btn span { display:none }" is meant for the nav
+   "Inicio" label only — this label must stay visible */
+#swUpdateBtn .sw-update-label { display: inline; }
+
+/* spinner takes the icon's place while working */
+#swUpdateBtn .sw-update-spinner {
+  display: none;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  margin: 2px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--jade);
+  border-radius: 50%;
+  animation: sw-update-spin 0.75s linear infinite;
+}
+
+#swUpdateBtn.is-working .sw-update-spinner { display: inline-block; }
+#swUpdateBtn.is-working .sw-update-icon { display: none; }
+
+#swUpdateBtn.is-ready {
+  color: var(--jade);
+  border-color: var(--jade);
+}
+
+#swUpdateBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
+  pointer-events: none;
+}
+
+@keyframes sw-update-spin {
+  to { transform: rotate(360deg); }
+}
+
+#content figure.presentation-image.is-offline img { display: none; }
+
+.img-offline-note {
+  padding: 28px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.85em;
+  font-style: italic;
+  text-align: center;
+}
