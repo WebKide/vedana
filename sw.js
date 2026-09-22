@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.007";
+const SW_VERSION = "jacaranda-dark-ui-v1.010";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -18,6 +18,7 @@ const IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 const SCOPE = self.registration.scope;
 const PRECACHE_URLS = [
   "css/styles.css",
+  "favicon.ico",
   "fonts/CharisSIL-Bold.woff2",
   "fonts/CharisSIL-BoldItalic.woff2",
   "fonts/CharisSIL-Italic.woff2",
@@ -34,6 +35,9 @@ const PRECACHE_URLS = [
   "img/author_avy.jpg",
   "img/author_photo.jpg",
   "img/author_picture.jpg",
+  "img/icons/android-chrome-192x192.png",
+  "img/icons/android-chrome-512x512.png",
+  "img/icons/icon-maskable-512.png",
   "img/rk_bhojan-lila-on-yamuna.jpg",
   "img/rk_nikunj-rasa.jpg",
   "img/rk_purva-raga.jpg",
