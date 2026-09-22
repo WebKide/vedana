@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.001";
+const SW_VERSION = "jacaranda-dark-ui-v1.005";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -14,7 +14,7 @@ const IMAGE_CACHE = "imgcatch";
 const IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 
 // Everything is resolved against the SW scope, so the site works from any
-// base path (e.g. https://user.github.io/viernesvedicos/).
+// base path (e.g. https://user.github.io/vedana/).
 const SCOPE = self.registration.scope;
 const PRECACHE_URLS = [
   "css/styles.css",

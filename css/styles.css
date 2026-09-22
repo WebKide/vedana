@@ -2403,6 +2403,10 @@ html {
 #content figure.presentation-image.is-offline img { display: none; }
 
 .img-offline-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   padding: 28px 16px;
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-md);
@@ -2412,4 +2416,15 @@ html {
   font-size: 0.85em;
   font-style: italic;
   text-align: center;
+}
+
+.img-offline-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  fill: var(--muted);
+}
+
+.img-offline-icon-slash {
+  fill: var(--peach);
 }

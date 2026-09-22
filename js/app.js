@@ -3620,7 +3620,12 @@
 
     var note = document.createElement('div');
     note.className = 'img-offline-note';
-    note.textContent = IMG_OFFLINE_TEXT;
+    note.innerHTML =
+      '<svg class="img-offline-icon" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 48 48" aria-hidden="true" focusable="false">' +
+        '<path d="M38 4H10c-3.3 0-6 2.7-6 6v28c0 3.3 2.7 6 6 6h28c3.3 0 6-2.7 6-6V10c0-3.3-2.7-6-6-6M9.3 39.9c-.8-.3-1.3-1-1.3-1.9v-1.2l.1-.1 6.9-6.9 2.2 2.2zM40 38c0 1.1-.9 2-2 2H14.8L32 22.8l8 8zm0-12.8-6.6-6.6c-.8-.8-2-.8-2.8 0L20 29.2l-3.6-3.6c-.8-.8-2-.8-2.8 0L8 31.1V10c0-1.1.9-2 2-2h28c1.1 0 2 .9 2 2zM17 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5"/>' +
+        '<path d="M42 43.5c-.4 0-.8-.1-1.1-.4l-36-36c-.6-.6-.6-1.5 0-2.1S6.4 4.4 7 5l36 36c.6.6.6 1.5 0 2.1-.2.3-.6.4-1 .4" class="img-offline-icon-slash"/>' +
+      '</svg>' +
+      '<span>' + escapeHtml(IMG_OFFLINE_TEXT) + '</span>';
     img.insertAdjacentElement('afterend', note);
   }
 
