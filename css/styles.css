@@ -425,6 +425,7 @@ header#site-header {
   max-width: min(90vw, 420px);
   max-height: 60vh;
   overflow-y: auto;
+  scrollbar-width: thin;
 
   box-shadow: 0 16px 40px var(--shadow-dark);
   z-index: 1001;
@@ -2428,3 +2429,32 @@ html {
 .img-offline-icon-slash {
   fill: var(--accent);
 }
+
+/* ---- toTop FAB ---- */
+#toTop {
+  --highlight-color: var(--peach);
+
+  position: fixed;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  right: max(16px, calc(50% - 344px)); /* inside the 720px column on desktop */
+  z-index: 90; /* above content and footer (9), below header (999), tooltips (960) and lightbox (950) */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 25%;
+
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+/* ---- Índice card width (desktop) ---- */
+.index-card { width: 80%; }
