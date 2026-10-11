@@ -251,10 +251,10 @@
   }
 
   var AUTHOR_AVATARS = [
-    'img/author_avatar.jpg',
-    'img/author_avy.jpg',
-    'img/author_photo.jpg',
-    'img/author_picture.jpg'
+    'img/author_avatar.avif',
+    'img/author_avy.avif',
+    'img/author_photo.avif',
+    'img/author_picture.avif'
   ];
 
   var footerAvatarEl = document.getElementById('footerAuthorImg');
@@ -2795,20 +2795,24 @@
 
   var SLIDES = [
     {
-      src: 'img/rk_purva-raga.jpg',
+      src: 'img/rk_purva-raga.avif',
       alt: 'Pūrva-raga | Śrīmatī Rādhikā se arregla para encontrarse con Kṛṣṇa.'
     },
     {
-      src: 'img/rk_bhojan-lila-on-yamuna.jpg',
-      alt: 'Śrī Śrī Rādhā Kṛṣṇa | Śrīmatī Rādhārāṇī da de comer a Kṛṣṇa.'
+      src: 'img/rk_bhojan-lila-on-yamuna.avif',
+      alt: 'Bhojana Madhyāhna-līlā | Śrīmatī Rādhārāṇī da de comer a Kṛṣṇa.'
     },
     {
-      src: 'img/rk_nikunj-rasa.jpg',
+      src: 'img/rk_nikunj-rasa.avif',
       alt: 'Nikuñja Rāsa | Las sakhīs adoran Śrī Śrī Rādhā Kṛṣṇa.'
     },
     {
-      src: 'img/rk_vina.jpg',
-      alt: 'Śrī Śrī Rādhā Kṛṣṇa | tocando la vina (instrumento de cuerdas).'
+      src: 'img/rk_shringar-lila.avif',
+      alt: 'Śṛṅgāra Rāsa | Kṛṣṇa peina y decora a Śrīmatī Rādhārāṇī.'
+    },
+    {
+      src: 'img/rk_vina.avif',
+      alt: 'Śrī Śrī Rādhā Kṛṣṇa | tocando la vīṇā (instrumento de cuerdas).'
     }
     // Optional per-slide `position` (e.g. 'top center') controls both
     // object-position and the Ken Burns zoom origin; defaults to 'center'.
