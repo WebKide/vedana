@@ -1,0 +1,155 @@
+{
+  "new": "ekadasi-mahatmya",
+  "folders": [
+    {
+      "display": "Almanaque védico",
+      "entries": [
+        {
+          "slug": "ekadasi-mahatmya",
+          "title": "Ekādaśī Mahātmya",
+          "menu_label": "Ekādaśī Mahātmya",
+          "path": "almanaque-vedico/ekadasi-mahatmya.html"
+        }
+      ]
+    },
+    {
+      "display": "Datos importantes",
+      "entries": [
+        {
+          "slug": "armonia",
+          "title": "Armonía “dharma” — Śrī Śrīmad Bhaktivedānta Nārāyaṇa Gosvāmī",
+          "menu_label": "Armonía “dharma”",
+          "path": "datos-importantes/armonia.html"
+        },
+        {
+          "slug": "envidia-matsarya",
+          "title": "Envidia “mātsarya” — por Ṭhākura Bhaktivinoda",
+          "menu_label": "Envidia “mātsarya”",
+          "path": "datos-importantes/envidia-matsarya.html"
+        },
+        {
+          "slug": "glosario-de-terminos",
+          "title": "Sánscrito — Glosario de Términos",
+          "menu_label": "Glosario de términos",
+          "path": "datos-importantes/glosario-de-terminos.html"
+        }
+      ]
+    },
+    {
+      "display": "Gauḍīya ācāryas",
+      "entries": [
+        {
+          "slug": "bhakti-pramoda-puri",
+          "title": "Recordando a Śrīla Bhakti Pramoda Purī Gosvāmī Mahārāja",
+          "menu_label": "Bhakti Pramoda Purī",
+          "path": "gaudiya-acaryas/bhakti-pramoda-puri.html"
+        },
+        {
+          "slug": "prabhupada-aparicion",
+          "title": "Las Glorias de Śrīla Prabhupāda — por Śrīla Bhaktivedānta Nārāyana Gosvāmī Mahārāja",
+          "menu_label": "Prabhupāda Aparición",
+          "path": "gaudiya-acaryas/prabhupada-aparicion.html"
+        }
+      ]
+    },
+    {
+      "display": "Jaiva Dharma I",
+      "entries": [
+        {
+          "slug": "intro-001",
+          "title": "i — Traducción, Edición y Prólogos",
+          "menu_label": "Traductores",
+          "path": "jaiva-dharma-i/intro-001.html"
+        },
+        {
+          "slug": "intro-002",
+          "title": "ii — Prólogo a la tercera edición en hindi",
+          "menu_label": "Prólogo",
+          "path": "jaiva-dharma-i/intro-002.html"
+        },
+        {
+          "slug": "intro-003",
+          "title": "iii — Introducción por Śrīla Bhakti Prajñāna Keśava Gosvāmī Mahārāja",
+          "menu_label": "Introducción",
+          "path": "jaiva-dharma-i/intro-003.html"
+        },
+        {
+          "slug": "jaiva-dharma-01",
+          "title": "01 — La Función Eterna y la Función Temporal del Alma",
+          "menu_label": "Capítulo 01",
+          "path": "jaiva-dharma-i/jaiva-dharma-01.html"
+        }
+      ]
+    },
+    {
+      "display": "Jaiva Dharma III",
+      "entries": [
+        {
+          "slug": "jaiva-dharma-40",
+          "title": "Capítulo 40 — La obtención de la riqueza última",
+          "menu_label": "Capítulo 40",
+          "path": "jaiva-dharma-iii/jaiva-dharma-40.html"
+        }
+      ]
+    },
+    {
+      "display": "Kṛṣṇa daśāvatāra",
+      "entries": [
+        {
+          "slug": "baladeva-tattva",
+          "title": "Baladeva Tattva",
+          "menu_label": "Aparición de Baladeva",
+          "path": "krsna-dasavatara/baladeva-tattva.html"
+        }
+      ]
+    },
+    {
+      "display": "Rādhā y Kṛṣṇa",
+      "entries": [
+        {
+          "slug": "janmastami",
+          "title": "Janmāṣṭamī — Las causas del avatāra de Kṛṣṇa",
+          "menu_label": "Janmāṣṭamī",
+          "path": "radha-y-krsna/janmastami.html"
+        },
+        {
+          "slug": "janmastami-2",
+          "title": "Janmāṣṭamī — Kṛṣṇa es avatārī, no avatāra",
+          "menu_label": "Janmāṣṭamī",
+          "path": "radha-y-krsna/janmastami-2.html"
+        },
+        {
+          "slug": "janmastami-3",
+          "title": "Janmāṣṭamī — Razones del advenimiento de Kṛṣṇa",
+          "menu_label": "Janmāṣṭamī 3",
+          "path": "radha-y-krsna/janmastami-3.html"
+        },
+        {
+          "slug": "janmastami-4",
+          "title": "Janmāṣṭamī — Las causas del avatāra de Kṛṣṇa",
+          "menu_label": "Janmāṣṭamī 4",
+          "path": "radha-y-krsna/janmastami-4.html"
+        },
+        {
+          "slug": "radhastami",
+          "title": "Rādhāṣṭamī — La aparición de Śrīmatī Rādhārāṇī",
+          "menu_label": "Rādhāṣṭamī",
+          "path": "radha-y-krsna/radhastami.html"
+        },
+        {
+          "slug": "radhastami-2",
+          "title": "Rādhāṣṭamī — Śrīmatī Rādhārāṇī es la sarkāra original",
+          "menu_label": "Rādhāṣṭamī 2",
+          "path": "radha-y-krsna/radhastami-2.html"
+        },
+        {
+          "slug": "stava-stutis",
+          "title": "Stava-stutis — Oraciones selectas (Rādhā-tattva, Kṛṣṇa-tattva, Gaura-tattva)",
+          "menu_label": "Oraciones selectas",
+          "path": "radha-y-krsna/stava-stutis.html"
+        }
+      ]
+    }
+  ],
+  "orphans": []
+}

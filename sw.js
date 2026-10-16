@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.047";
+const SW_VERSION = "jacaranda-dark-ui-v1.073";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -58,9 +58,11 @@ const PRECACHE_URLS = [
   "js/dependencies/fuse.min.js",
   "js/router.js",
   "site.webmanifest",
+  "templates/almanaque-vedico/ekadasi-mahatmya.html",
   "templates/datos-importantes/armonia.html",
   "templates/datos-importantes/envidia-matsarya.html",
   "templates/datos-importantes/glosario-de-terminos.html",
+  "templates/gaudiya-acaryas/bhakti-pramoda-puri.html",
   "templates/gaudiya-acaryas/prabhupada-aparicion.html",
   "templates/jaiva-dharma-i/intro-001.html",
   "templates/jaiva-dharma-i/intro-002.html",
@@ -75,7 +77,8 @@ const PRECACHE_URLS = [
   "templates/radha-y-krsna/radhastami-2.html",
   "templates/radha-y-krsna/radhastami.html",
   "templates/radha-y-krsna/stava-stutis.html",
-  "templates/search-index.json"
+  "templates/search-index.json",
+  "templates/site-tree.json"
 ];
 const PRECACHE_HREFS = new Set(
   PRECACHE_URLS.map(function (path) {

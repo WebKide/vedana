@@ -476,6 +476,21 @@ header#site-header {
   transform: rotate(90deg);
 }
 
+.nav-folder-count {
+  order: 2;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "continue" dot: sits right after the folder name so the count stays flush right */
+.nav-folder-toggle.has-dot::after {
+  order: 1;
+  margin-left: 8px;
+}
+
 .nav-dropdown .nav-folder-list {
   padding: 2px 0 2px 22px;
 }
@@ -888,6 +903,11 @@ html.is-template-view .footer-dev-controls { display: flex; }
 }
 
 html.is-template-view .footer-author { display: flex; }
+
+/* Wide screens: author card = 80% of the reading column (the footer is outside #content) */
+@media (min-width: 721px) {
+  footer > .footer-author, footer > .footer-dev-controls { width: calc(var(--reading-width) * 0.92); }
+}
 
 .footer-author-img {
   border: 2px solid var(--jade);
@@ -2435,9 +2455,9 @@ html {
   --highlight-color: var(--peach);
 
   position: fixed;
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  bottom: max(calc(16px + env(safe-area-inset-bottom)), var(--toTop-lift, 0px));
   right: max(16px, calc(50% - 344px)); /* inside the 720px column on desktop */
-  z-index: 90; /* above content and footer (9), below header (999), tooltips (960) and lightbox (950) */
+  z-index: 8; /* above content and below footer (9) so it hides nicely */
 
   display: flex;
   align-items: center;
@@ -2458,3 +2478,26 @@ html {
 
 /* ---- Índice card width (desktop) ---- */
 .index-card { width: 80%; }
+
+#content .index-card li.index-note {
+  display: block;
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+#content .index-card ol ol {
+  margin: 0;
+  font-size: 1em;
+}
+
+/* Nav menu reveal: hidden until js/app.js has built the menu */
+#navMenuTrigger {
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity var(--transition-med), transform var(--transition-med);
+}
+
+#navMenuTrigger.is-ready {
+  opacity: 1;
+  transform: none;
+}
