@@ -6,13 +6,13 @@
       "entries": [
         {
           "slug": "ekadasi-mahatmya",
-          "title": "Ekādaśī Mahātmya",
+          "title": "Ekādaśī Mahātmya — obra que expone los méritos sagrádos del voto de Ekādaśī",
           "menu_label": "Ekādaśī Mahātmya",
           "path": "almanaque-vedico/ekadasi-mahatmya.html"
         },
         {
           "slug": "kartika-sankalpa",
-          "title": "Kārtika-vrata saṅkalpa",
+          "title": "Kārtika-vrata saṅkalpa — declaración del voto para el mes de Kārtika",
           "menu_label": "Kārtika Saṅkalpa",
           "path": "almanaque-vedico/kartika-sankalpa.html"
         }
