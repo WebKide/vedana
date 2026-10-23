@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.074";
+const SW_VERSION = "jacaranda-dark-ui-v1.096";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -59,15 +59,19 @@ const PRECACHE_URLS = [
   "js/router.js",
   "site.webmanifest",
   "templates/almanaque-vedico/ekadasi-mahatmya.html",
+  "templates/almanaque-vedico/kartika-sankalpa.html",
   "templates/datos-importantes/armonia.html",
+  "templates/datos-importantes/bhaktivinodademonios.html",
   "templates/datos-importantes/envidia-matsarya.html",
   "templates/datos-importantes/glosario-de-terminos.html",
+  "templates/datos-importantes/vidvad-rudhi.html",
   "templates/gaudiya-acaryas/bhakti-pramoda-puri.html",
   "templates/gaudiya-acaryas/prabhupada-aparicion.html",
   "templates/jaiva-dharma-i/intro-001.html",
   "templates/jaiva-dharma-i/intro-002.html",
   "templates/jaiva-dharma-i/intro-003.html",
   "templates/jaiva-dharma-i/jaiva-dharma-01.html",
+  "templates/jaiva-dharma-i/jaiva-dharma-02.html",
   "templates/jaiva-dharma-iii/jaiva-dharma-40.html",
   "templates/krsna-dasavatara/baladeva-tattva.html",
   "templates/radha-y-krsna/janmastami-2.html",

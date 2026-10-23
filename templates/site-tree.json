@@ -1,5 +1,5 @@
 {
-  "new": "ekadasi-mahatmya",
+  "new": "jaiva-dharma-02",
   "folders": [
     {
       "display": "Almanaque védico",
@@ -9,6 +9,12 @@
           "title": "Ekādaśī Mahātmya",
           "menu_label": "Ekādaśī Mahātmya",
           "path": "almanaque-vedico/ekadasi-mahatmya.html"
+        },
+        {
+          "slug": "kartika-sankalpa",
+          "title": "Kārtika-vrata saṅkalpa",
+          "menu_label": "Kārtika Saṅkalpa",
+          "path": "almanaque-vedico/kartika-sankalpa.html"
         }
       ]
     },
@@ -22,6 +28,12 @@
           "path": "datos-importantes/armonia.html"
         },
         {
+          "slug": "bhaktivinodademonios",
+          "title": "Notas de Bhaktivinoda Ṭhākura sobre el Bhāgavata",
+          "menu_label": "Bhaktivinodademonios",
+          "path": "datos-importantes/bhaktivinodademonios.html"
+        },
+        {
           "slug": "envidia-matsarya",
           "title": "Envidia “mātsarya” — por Ṭhākura Bhaktivinoda",
           "menu_label": "Envidia “mātsarya”",
@@ -32,6 +44,12 @@
           "title": "Sánscrito — Glosario de Términos",
           "menu_label": "Glosario de términos",
           "path": "datos-importantes/glosario-de-terminos.html"
+        },
+        {
+          "slug": "vidvad-rudhi",
+          "title": "Vidvad-rūḍhī",
+          "menu_label": "Vidvad Rūḍhī",
+          "path": "datos-importantes/vidvad-rudhi.html"
         }
       ]
     },
@@ -78,6 +96,12 @@
           "title": "01 — La Función Eterna y la Función Temporal del Alma",
           "menu_label": "Capítulo 01",
           "path": "jaiva-dharma-i/jaiva-dharma-01.html"
+        },
+        {
+          "slug": "jaiva-dharma-02",
+          "title": "02 — La Función Eterna del Alma es Pura e Imperecedera",
+          "menu_label": "Capítulo 02",
+          "path": "jaiva-dharma-i/jaiva-dharma-02.html"
         }
       ]
     },
