@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.102";
+const SW_VERSION = "jacaranda-dark-ui-v1.120";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -60,11 +60,21 @@ const PRECACHE_URLS = [
   "site.webmanifest",
   "templates/almanaque-vedico/ekadasi-mahatmya.html",
   "templates/almanaque-vedico/kartika-sankalpa.html",
+  "templates/almanaque-vedico/sankalpa-arghya.html",
+  "templates/almanaque-vedico/vraja-parikrama-2026.html",
   "templates/datos-importantes/armonia.html",
-  "templates/datos-importantes/bhaktivinodademonios.html",
+  "templates/datos-importantes/bhaktivinod-demonios.html",
   "templates/datos-importantes/envidia-matsarya.html",
   "templates/datos-importantes/glosario-de-terminos.html",
   "templates/datos-importantes/vidvad-rudhi.html",
+  "templates/garga-samhita-eng/canto1-eng.html",
+  "templates/garga-samhita-eng/canto2-eng.html",
+  "templates/garga-samhita-eng/canto3-eng.html",
+  "templates/garga-samhita-eng/canto4-eng.html",
+  "templates/garga-samhita-eng/canto5-eng.html",
+  "templates/garga-samhita-eng/canto6-eng.html",
+  "templates/garga-samhita-eng/canto8-eng.html",
+  "templates/gaudiya-acaryas/19-de-octubre-1994.html",
   "templates/gaudiya-acaryas/bhakti-pramoda-puri.html",
   "templates/gaudiya-acaryas/prabhupada-aparicion.html",
   "templates/jaiva-dharma-i/intro-001.html",

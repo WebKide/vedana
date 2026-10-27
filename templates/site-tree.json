@@ -1,5 +1,5 @@
 {
-  "new": "jaiva-dharma-02",
+  "new": "vraja-parikrama-2026",
   "folders": [
     {
       "display": "Almanaque védico",
@@ -15,6 +15,18 @@
           "title": "Kārtika-vrata saṅkalpa — declaración del voto para el mes de Kārtika",
           "menu_label": "Kārtika Saṅkalpa",
           "path": "almanaque-vedico/kartika-sankalpa.html"
+        },
+        {
+          "slug": "sankalpa-arghya",
+          "title": "Kārtika-vrata: Saṅkalpa y Arghya",
+          "menu_label": "Saṅkalpa Arghya",
+          "path": "almanaque-vedico/sankalpa-arghya.html"
+        },
+        {
+          "slug": "vraja-parikrama-2026",
+          "title": "Śrī Vraja-maṇḍala Parikramā Virtual 2026",
+          "menu_label": "Vraja Parikramā 2026",
+          "path": "almanaque-vedico/vraja-parikrama-2026.html"
         }
       ]
     },
@@ -28,10 +40,10 @@
           "path": "datos-importantes/armonia.html"
         },
         {
-          "slug": "bhaktivinodademonios",
+          "slug": "bhaktivinod-demonios",
           "title": "Notas de Bhaktivinoda Ṭhākura sobre el Bhāgavata",
-          "menu_label": "Bhaktivinodademonios",
-          "path": "datos-importantes/bhaktivinodademonios.html"
+          "menu_label": "Bhaktivinod Demonios",
+          "path": "datos-importantes/bhaktivinod-demonios.html"
         },
         {
           "slug": "envidia-matsarya",
@@ -54,8 +66,61 @@
       ]
     },
     {
+      "display": "Garga saṁhitā (ENG)",
+      "entries": [
+        {
+          "slug": "canto1-eng",
+          "title": "Canto 1 — Goloka-khaṇḍa (ENG)",
+          "menu_label": "Canto1 Eng",
+          "path": "garga-samhita-eng/canto1-eng.html"
+        },
+        {
+          "slug": "canto2-eng",
+          "title": "Canto 2 — Vṛndāvana-khaṇḍa (ENG)",
+          "menu_label": "Canto2 Eng",
+          "path": "garga-samhita-eng/canto2-eng.html"
+        },
+        {
+          "slug": "canto3-eng",
+          "title": "Canto 3 — Girirāja-khaṇḍa (ENG)",
+          "menu_label": "Canto3 Eng",
+          "path": "garga-samhita-eng/canto3-eng.html"
+        },
+        {
+          "slug": "canto4-eng",
+          "title": "Canto 4 — Mādhurya-khaṇḍa (ENG)",
+          "menu_label": "Canto4 Eng",
+          "path": "garga-samhita-eng/canto4-eng.html"
+        },
+        {
+          "slug": "canto5-eng",
+          "title": "Canto 5 — Mathurā-khaṇḍa (ENG)",
+          "menu_label": "Canto5 Eng",
+          "path": "garga-samhita-eng/canto5-eng.html"
+        },
+        {
+          "slug": "canto6-eng",
+          "title": "Canto 6 — Dvārakā-khaṇḍa (ENG)",
+          "menu_label": "Canto6 Eng",
+          "path": "garga-samhita-eng/canto6-eng.html"
+        },
+        {
+          "slug": "canto8-eng",
+          "title": "Canto 8 — Balabhadra-khaṇḍa (ENG)",
+          "menu_label": "Canto8 Eng",
+          "path": "garga-samhita-eng/canto8-eng.html"
+        }
+      ]
+    },
+    {
       "display": "Gauḍīya ācāryas",
       "entries": [
+        {
+          "slug": "19-de-octubre-1994",
+          "title": "El mes de Kārtika y la gloria de Śrīla Bhakti Prajñāna Keśava Gosvāmī 1994",
+          "menu_label": "19 de octubre, 1994",
+          "path": "gaudiya-acaryas/19-de-octubre-1994.html"
+        },
         {
           "slug": "bhakti-pramoda-puri",
           "title": "Recordando a Śrīla Bhakti Pramoda Purī Gosvāmī Mahārāja",
