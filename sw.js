@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.120";
+const SW_VERSION = "jacaranda-dark-ui-v1.123";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -67,6 +67,8 @@ const PRECACHE_URLS = [
   "templates/datos-importantes/envidia-matsarya.html",
   "templates/datos-importantes/glosario-de-terminos.html",
   "templates/datos-importantes/vidvad-rudhi.html",
+  "templates/de-hindi-a-latam/cartas-de-kartika.html",
+  "templates/de-hindi-a-latam/por-que-parikramas.html",
   "templates/garga-samhita-eng/canto1-eng.html",
   "templates/garga-samhita-eng/canto2-eng.html",
   "templates/garga-samhita-eng/canto3-eng.html",

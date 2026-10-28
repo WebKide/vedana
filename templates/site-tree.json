@@ -1,5 +1,5 @@
 {
-  "new": "vraja-parikrama-2026",
+  "new": "cartas-de-kartika",
   "folders": [
     {
       "display": "Almanaque védico",
@@ -62,6 +62,23 @@
           "title": "Vidvad-rūḍhī",
           "menu_label": "Vidvad Rūḍhī",
           "path": "datos-importantes/vidvad-rudhi.html"
+        }
+      ]
+    },
+    {
+      "display": "De Hindi a LatAm",
+      "entries": [
+        {
+          "slug": "cartas-de-kartika",
+          "title": "Cartas de Mathurā durante el mes de Kārtika",
+          "menu_label": "Cartas De Kārtika",
+          "path": "de-hindi-a-latam/cartas-de-kartika.html"
+        },
+        {
+          "slug": "por-que-parikramas",
+          "title": "¿Por qué realizamos el parikramā de los dhāmas? 2007",
+          "menu_label": "Por Que Parikramās",
+          "path": "de-hindi-a-latam/por-que-parikramas.html"
         }
       ]
     },
