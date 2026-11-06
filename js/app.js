@@ -254,15 +254,15 @@
   // ---------------------------------------------------------------
 
   var FOOTER_BIOS = [
-    'Catorce años después de partir hacia Oriente, Nitāy volvió de India con historias, conocimientos y una cantidad considerable de experiencias. Ahora intenta compartir algunas, sin hacer demasiado ruido.',
-    'Catorce años en India dejan secuelas. En el caso de Nitāy, incluyen curiosidad crónica, gusto por los Vedas y una extraña capacidad para convertir experiencias improbables en historias útiles.',
-    'Catorce años en India produjeron una colección considerable de experiencias, aprendizajes y anécdotas. Nitāy volvió a Latinoamérica y, eventualmente, empezó a ponerlas en castellano.',
+    'Catorce años después de partir hacia Oriente, Nitāy volvió de India con historias, conocimientos y una cantidad considerable de experiencias. Ahora intenta compartir algunas de ellas, sin hacer mucho ruido.',
+    'Catorce años en India dejan secuelas. En el caso de Nitāy, incluyen curiosidad crónica, gusto por los Vedas y una extraña capacidad para convertir experiencias improbables en narraciones útiles.',
+    'Catorce años en India produjeron una colección considerable de experiencias, aprendizajes y anécdotas. Nitāy volvió a Latinoamérica y, eventualmente, empezó a ponerlas en castellano, en este blog.',
     'Después de 14 años en India, Nitāy regresó a Latinoamérica con historias, herramientas y suficientes experiencias extrañas como para sospechar que el caos no es un problema: es parte de la vida.',
     'Después de 14 años en India, Nitāy regresó a Latinoamérica. Trajo consigo experiencias, conocimientos y unas cuantas historias que probablemente suenen inventadas, pero no lo son.',
-    'Después de 14 años en India, Nitāy volvió a casa con algo más difícil de empacar que baratijas: preguntas nuevas, sabidurías ancestrales y una peligrosa certeza de que el caos tiene sentido.',
+    'Después de 14 años en India, Nitāy volvió a casa con algo más difícil de empacar que baratijas: preguntas nuevas, sabidurías ancestrales y una peligrosa certeza de que el caos tiene sentido y secuencia.',
     'Luego de 14 años en India, Nitāy regresó a Latinoamérica con recuerdos difíciles de resumir y conocimientos casi imposibles de explicar. ¿La solución? intentar escribirlos en castellano.',
-    'Nitāy no es un maestro ni un mesías, solo un estudiante apasionado que vivió 14 años en India y aprendió a convertir el caos en experiencias, que ahora comparte en castellano.',
-    'Nitāy pasó 14 años en India entre estudios, trabajo, aventuras y situaciones difíciles de explicar. Volvió a Latinoamérica con algunas cosas que valía la pena traer de vuelta.',
+    'Nitāy no es un maestro ni un mesías, solo un estudiante apasionado que vivió 14 años en India y aprendió a convertir el caos en experiencias, las cuales comparte en castellano.',
+    'Nitāy pasó 14 años en India entre estudios, trabajo, aventuras y situaciones difíciles de explicar. Volvió a Latinoamérica con algunas experiencias que no cabían en su equipaje de mano.',
     'Nitāy pasó 14 años en India explorando asuntos antiguos, extraños y bastante más prácticos de lo que parecen. Al regresar, encontró que algunas de esas cosas merecían ser contadas en castellano.',
     'Nitāy pasó 14 años en India. Hubo estudios, trabajo, arte, filosofía, problemas, soluciones y otras cosas que no caben en una biografía breve. Por eso decidió escribirlas en este blog.',
     'Nitāy se fue a India buscando sentido y regresó 14 años después con suficientes historias para convertirlas en ideas, escritos, presentaciones y experiencias para quienes todavía están en casa.',
@@ -986,7 +986,8 @@
       parent.closest('#templateSearchModal') ||
       parent.closest('.accordion-chevron') ||
       parent.closest('.accordion-preview') ||
-      parent.closest('.index-card')
+      parent.closest('.index-card') ||
+      parent.closest('svg')
     ) {
       return false;
     }
@@ -3172,7 +3173,7 @@
             entry: entry,
             bulletpoints: bullets,
             note: bullets.length === 0
-              ? 'Only the title of this document matches your query "' + rawQuery + '"'
+              ? 'Tu busqueda solo resaltó el título de esta presentacíon “' + rawQuery + '”'
               : null
           };
         });
