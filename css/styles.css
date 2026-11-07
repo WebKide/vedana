@@ -374,6 +374,12 @@ header#site-header {
   text-overflow: clip;
 }
 
+/* Same 24px edge fade as .footer-template-text, only while the title scrolls */
+.nav-menu-btn:has(.footer-marquee-track.marquee) {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
+}
+
 .nav-menu-btn:hover,
 .nav-menu-btn:focus-visible {
   color: var(--cyan);

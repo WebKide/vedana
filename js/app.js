@@ -2699,7 +2699,7 @@
       var overflow = firstSpan.scrollWidth - container.clientWidth;
 
       if (overflow > 0) {
-        var duration = Math.max(15, Math.min(60, firstSpan.scrollWidth / 40));
+        var duration = Math.max(30, Math.min(120, firstSpan.scrollWidth / 20));
         track.style.setProperty('--marquee-duration', duration + 's');
         track.classList.add('marquee');
       }
@@ -2766,7 +2766,7 @@
       duplicate.setAttribute('aria-hidden', 'true');
       track.appendChild(duplicate);
 
-      var duration = Math.max(15, Math.min(60, navTitleEl.scrollWidth / 40));
+      var duration = Math.max(30, Math.min(120, navTitleEl.scrollWidth / 20));
       track.style.setProperty('--marquee-duration', duration + 's');
 
       // Force the animation to start from its initial position every time
