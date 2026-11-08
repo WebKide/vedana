@@ -1,5 +1,5 @@
 {
-  "new": "mas-que-palabras",
+  "new": "sarartha-canto-10",
   "folders": [
     {
       "display": "Almanaque védico",
@@ -73,6 +73,12 @@
           "title": "Sánscrito — Glosario de Términos",
           "menu_label": "Glosario de términos",
           "path": "datos-importantes/glosario-de-terminos.html"
+        },
+        {
+          "slug": "nitaysvalikhitajivani",
+          "title": "Nitāy Sva-likhita Jīvani — Autobiografía de un estudiante",
+          "menu_label": "Nitāysvalikhitajīvani",
+          "path": "datos-importantes/nitaysvalikhitajivani.html"
         },
         {
           "slug": "notas-bhagavata",
@@ -223,6 +229,18 @@
           "title": "Baladeva Tattva",
           "menu_label": "Aparición de Baladeva",
           "path": "krsna-dasavatara/baladeva-tattva.html"
+        },
+        {
+          "slug": "choti-dipavali",
+          "title": "Choṭī Diwali, Kālī Chaudas, Naraka Chaturdaśī",
+          "menu_label": "Choṭī dīpāvalī",
+          "path": "krsna-dasavatara/choti-dipavali.html"
+        },
+        {
+          "slug": "yamala-arjuna",
+          "title": "La liberación de los árboles Yamala Arjuna — Ānanda-vṛndāvana-champū",
+          "menu_label": "Yamala arjuna",
+          "path": "krsna-dasavatara/yamala-arjuna.html"
         }
       ]
     },
@@ -270,6 +288,71 @@
           "title": "Stava-stutis — Oraciones selectas (Rādhā-tattva, Kṛṣṇa-tattva, Gaura-tattva)",
           "menu_label": "Oraciones selectas",
           "path": "radha-y-krsna/stava-stutis.html"
+        }
+      ]
+    },
+    {
+      "display": "Sārārtha darśinī (ENG)",
+      "entries": [
+        {
+          "slug": "sarartha-canto-01",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 1",
+          "menu_label": "CANTO 1",
+          "path": "sarartha-darsini-eng/sarartha-canto-01.html"
+        },
+        {
+          "slug": "sarartha-canto-02",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 2",
+          "menu_label": "CANTO 2",
+          "path": "sarartha-darsini-eng/sarartha-canto-02.html"
+        },
+        {
+          "slug": "sarartha-canto-03",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 3",
+          "menu_label": "CANTO 3",
+          "path": "sarartha-darsini-eng/sarartha-canto-03.html"
+        },
+        {
+          "slug": "sarartha-canto-04",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 4",
+          "menu_label": "CANTO 4",
+          "path": "sarartha-darsini-eng/sarartha-canto-04.html"
+        },
+        {
+          "slug": "sarartha-canto-05",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 5",
+          "menu_label": "CANTO 5",
+          "path": "sarartha-darsini-eng/sarartha-canto-05.html"
+        },
+        {
+          "slug": "sarartha-canto-06",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 6",
+          "menu_label": "CANTO 6",
+          "path": "sarartha-darsini-eng/sarartha-canto-06.html"
+        },
+        {
+          "slug": "sarartha-canto-07",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 7",
+          "menu_label": "CANTO 7",
+          "path": "sarartha-darsini-eng/sarartha-canto-07.html"
+        },
+        {
+          "slug": "sarartha-canto-08",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 8",
+          "menu_label": "CANTO 8",
+          "path": "sarartha-darsini-eng/sarartha-canto-08.html"
+        },
+        {
+          "slug": "sarartha-canto-09",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 9",
+          "menu_label": "CANTO 9",
+          "path": "sarartha-darsini-eng/sarartha-canto-09.html"
+        },
+        {
+          "slug": "sarartha-canto-10",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 10",
+          "menu_label": "CANTO 10",
+          "path": "sarartha-darsini-eng/sarartha-canto-10.html"
         }
       ]
     }

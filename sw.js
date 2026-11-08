@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.179";
+const SW_VERSION = "jacaranda-dark-ui-v1.182";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -68,6 +68,7 @@ const PRECACHE_URLS = [
   "templates/datos-importantes/armonia.html",
   "templates/datos-importantes/envidia-matsarya.html",
   "templates/datos-importantes/glosario-de-terminos.html",
+  "templates/datos-importantes/nitaysvalikhitajivani.html",
   "templates/datos-importantes/notas-bhagavata.html",
   "templates/de-hindi-a-latam/cartas-de-kartika.html",
   "templates/de-hindi-a-latam/por-que-parikramas.html",
@@ -88,6 +89,8 @@ const PRECACHE_URLS = [
   "templates/jaiva-dharma-i/jaiva-dharma-03.html",
   "templates/jaiva-dharma-iii/jaiva-dharma-40.html",
   "templates/krsna-dasavatara/baladeva-tattva.html",
+  "templates/krsna-dasavatara/choti-dipavali.html",
+  "templates/krsna-dasavatara/yamala-arjuna.html",
   "templates/radha-y-krsna/janmastami-2.html",
   "templates/radha-y-krsna/janmastami-3.html",
   "templates/radha-y-krsna/janmastami-4.html",
@@ -95,6 +98,16 @@ const PRECACHE_URLS = [
   "templates/radha-y-krsna/radhastami-2.html",
   "templates/radha-y-krsna/radhastami.html",
   "templates/radha-y-krsna/stava-stutis.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-01.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-02.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-03.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-04.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-05.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-06.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-07.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-08.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-09.html",
+  "templates/sarartha-darsini-eng/sarartha-canto-10.html",
   "templates/search-index.json",
   "templates/site-tree.json"
 ];
