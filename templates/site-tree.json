@@ -1,5 +1,5 @@
 {
-  "new": "sarartha-canto-10",
+  "new": "sarartha-canto-11",
   "folders": [
     {
       "display": "Almanaque védico",
@@ -73,12 +73,6 @@
           "title": "Sánscrito — Glosario de Términos",
           "menu_label": "Glosario de términos",
           "path": "datos-importantes/glosario-de-terminos.html"
-        },
-        {
-          "slug": "nitaysvalikhitajivani",
-          "title": "Nitāy Sva-likhita Jīvani — Autobiografía de un estudiante",
-          "menu_label": "Nitāysvalikhitajīvani",
-          "path": "datos-importantes/nitaysvalikhitajivani.html"
         },
         {
           "slug": "notas-bhagavata",
@@ -353,6 +347,12 @@
           "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 10",
           "menu_label": "CANTO 10",
           "path": "sarartha-darsini-eng/sarartha-canto-10.html"
+        },
+        {
+          "slug": "sarartha-canto-11",
+          "title": "Viśvanātha Cakravartī Ṭhākura’s Sārārtha-darśinī ṭīka — Canto 11",
+          "menu_label": "CANTO 11",
+          "path": "sarartha-darsini-eng/sarartha-canto-11.html"
         }
       ]
     }

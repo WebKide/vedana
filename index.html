@@ -97,19 +97,9 @@
           </svg>
           <span>Tabla de Contenido</span>
         </button>
-        <button id="fontDecBtn" class="font-btn" 
-                title="Reducir texto" aria-label="Decrease text size">
-          <svg class="back-icon" viewBox="0 0 24 24" 
-               width="18" height="18" 
-               fill="currentColor" focusable="false">
-            <path d="M1 19 6.3 5h2.5L14 19h-2.4l-1.3-3.6H4.7L3.4 19zm4.4-5.6h4.2l-2-5.8h-.2zM15 13v-2h8v2z"/>
-          </svg>
-        </button>
-        <button id="fontIncBtn" class="font-btn" title="Agrandar texto" aria-label="Increase text size">
-          <svg class="back-icon" viewBox="0 0 24 24" 
-               width="18" height="18" 
-               fill="currentColor" focusable="false">
-            <path d="M1 19 6.3 5h2.5L14 19h-2.4l-1.3-3.6H4.7L3.4 19zm4.4-5.6h4.2l-2-5.8h-.1zM18 16v-3h-3v-2h3V8h2v3h3v2h-3v3z"/>
+        <button id="settingsBtn" class="font-btn" title="Ajustes" aria-label="Ajustes" aria-haspopup="dialog">
+          <svg class="back-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M4.3 7.5c.1.2.4.4.6.4h1.6L8.6 10l1.6-1.3-2.3-2.3V4.9c0-.3-.1-.5-.4-.6L3.8 2c-.3-.2-.7-.1-.9.1l-.8.7c-.2.3-.3.7-.1 1zm14 5.9-2.6.1-3.1 3.7 4.2 4.2c1.3 1.3 3.5 1.3 4.8 0s1.3-3.5 0-4.8zm.7 5.5c-.3.3-.8.3-1.1 0L16 17c-.3-.3-.3-.8 0-1.1s.8-.3 1.1 0l1.9 1.9c.3.3.3.8 0 1.1M16.8 12c3.9 0 5.6-2.9 5.7-5.1 0-.6-.3-1.9-.4-2-.3-.3-.8-.3-1.1 0l-3.3 3.3c-.8 0-1.9-.7-1.9-1.9L19.1 3c.1-.1.2-.2.2-.3.1-.4 0-1.2-2-1.2-2.9 0-5.3 2.2-5.3 5.3 0 1 .2 2.2-.6 2.8 0 0-9 7.4-9.1 7.6-1.2 1.4-1 3.5.4 4.6 1.4 1.2 3.5 1 4.6-.4l7.2-8.7c.8-.9 1.8-.7 2.3-.7M4.9 19.9c-.4 0-.7-.3-.7-.7s.3-.7.7-.7.7.3.7.7-.3.7-.7.7" />
           </svg>
         </button>
       </div>
@@ -276,6 +266,100 @@
         <img id="codeLightboxImage" class="code-lightbox-image" alt="" hidden>
       </div>
 
+    </div>
+
+  </div>
+
+  <!-- ================================================================
+       SETTINGS MODAL
+       Persistent: intentionally outside #content. Opened by #settingsBtn
+       (see "Settings modal" in js/app.js). Reuses the code-lightbox
+       overlay / toolbar / title / close-button classes.
+       ================================================================ -->
+
+  <div id="settingsModal" class="settings-modal" inert>
+
+    <div id="settingsOverlay" class="code-lightbox-overlay"></div>
+
+    <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+
+      <div class="code-lightbox-toolbar">
+        <span class="code-lightbox-title" id="settingsTitle">Ajustes Visuales de las Presentaciones</span>
+        <button id="settingsClose" class="code-lightbox-close" type="button" title="Cerrar" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="settings-body">
+
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4,20V4H6V20H4Zm14,0V4h2V20H18ZM7.35,17L11.1,7h1.8l3.75,10H14.93l-0.9-2.55H9.98L9.08,17H7.35Zm3.15-4h3L12.05,8.85h-0.1L10.5,13Z"/></svg>
+          <span class="settings-row-name">Justificar texto</span>
+          <button id="settingsJustifyBtn" class="settings-switch" type="button" aria-pressed="false" aria-label="Justificar texto"></button>
+        </div>
+
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7,20V7H2V4H15V7H10V20H7Zm9,0V12H13V9h9v3H19v8H16Z"/></svg>
+          <span class="settings-row-name">Reducir texto</span>
+          <button id="fontDecBtn" class="font-btn" title="Reducir texto" aria-label="Decrease text size">
+            <svg class="back-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" focusable="false">
+              <path d="M1 19 6.3 5h2.5L14 19h-2.4l-1.3-3.6H4.7L3.4 19zm4.4-5.6h4.2l-2-5.8h-.2zM15 13v-2h8v2z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7,20V7H2V4H15V7H10V20H7Zm9,0V12H13V9h9v3H19v8H16Z"/></svg>
+          <span class="settings-row-name">Agrandar texto</span>
+          <button id="fontIncBtn" class="font-btn" title="Agrandar texto" aria-label="Increase text size">
+            <svg class="back-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" focusable="false">
+              <path d="M1 19 6.3 5h2.5L14 19h-2.4l-1.3-3.6H4.7L3.4 19zm4.4-5.6h4.2l-2-5.8h-.1zM18 16v-3h-3v-2h3V8h2v3h3v2h-3v3z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Font rows: data-font is the CSS value written to --content-font.
+             To add a font, copy a row and change the name + data-font. -->
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.65,22q-1.35,0-2-0.55T2,19.8q0-1.45 1.23-1.85t2.9-0.4H6.65v-1.4q0-0.85-0.03-1.39T6.48,13.88q-0.13-0.35-0.29-0.49T5.75,13.25q-0.22,0-0.41,0.07t-0.31,0.2q-0.1,0.13-0.13,0.26t0.03,0.29q0.15,0.28 0.35,0.54q0.2,0.26 0.2,0.61q0,0.63-0.44,1.06T3.98,16.73T2.91,16.29T2.48,15.23q0-0.68 0.3-1.1t0.81-0.68T4.78,13.1T6.23,13q2.12,0 2.95,0.76Q10,14.53 10,16.45v3.68q0,0.48 0.11,0.7t0.39,0.23q0.3,0 0.49-0.45t0.24-1.4H11.5q-0.07,1.55-0.59,2.18T9.2,22q-1.08,0-1.69-0.34T6.73,20.65q-0.25,0.73-0.74,1.04T4.65,22Zm9.33,0q-0.5,0-0.81-0.41q-0.31-0.41-0.11-0.89l2.55-6.73q0.17-0.43 0.55-0.7T17,13q0.48,0 0.85,0.27t0.55,0.7l2.55,6.73q0.2,0.48-0.11,0.89T20.03,22q-0.3,0-0.55-0.18T19.1,21.35L18.6,19.9H15.4l-0.5,1.45q-0.1,0.27-0.35,0.46T13.98,22Zm-8.1-0.73q0.33,0 0.55-0.51t0.22-1.24V17.85Q6,17.85 5.7,18.24T5.4,19.5v0.27q0,0.9 0.1,1.2t0.38,0.3Zm10.18-3.13h1.93L17,15.3l-0.95,2.85Zm-0.93-7.13q-1.2,0-1.91-0.84T12.5,7.93q0-2.6 1.65-4.26T18.38,2q1.05,0 1.7,0.24t0.65,0.61q0,0.15-0.05,0.3T20.5,3.42Q20.38,3.6 20.19,3.67T19.8,3.7Q19.45,3.6 19,3.52T18.18,3.45q-1.77,0-2.85,1.2T14.25,7.82q0,0.55 0.2,1.15t0.9,0.6q0.27,0 0.54-0.13T16.35,9.1q0.43-0.45 0.79-1.5T17.8,5.05q0.05-0.33 0.26-0.46q0.21-0.14 0.59-0.14q0.45,0 0.69,0.24t0.14,0.59q-0.3,1.07-0.44,1.88T18.9,8.6q0,0.5 0.14,0.72t0.41,0.22t0.54-0.2T20.73,8.6q0.05-0.08 0.38-0.18q0.2,0 0.3,0.15T21.5,9q0,0.7-0.8,1.35T19.03,11q-0.65,0-1.11-0.35t-0.64-1q-0.38,0.65-0.93,1.01q-0.55,0.36-1.23,0.36ZM3,11V5.5Q3,4.05 4.03,3.02T6.5,2T8.98,3.02T10,5.5V11H8V9H5v2H3ZM5,7H8V5.5Q8,4.88 7.56,4.44T6.5,4T5.44,4.44T5,5.5V7Z"/></svg>
+          <span class="settings-row-name" style="font-family: var(--font-sans); font-weight: 700;">Nunito Sans</span>
+          <button class="settings-switch" type="button" data-font="var(--font-sans)" aria-pressed="false" aria-label="Nunito Sans"></button>
+        </div>
+
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.65,22q-1.35,0-2-0.55T2,19.8q0-1.45 1.23-1.85t2.9-0.4H6.65v-1.4q0-0.85-0.03-1.39T6.48,13.88q-0.13-0.35-0.29-0.49T5.75,13.25q-0.22,0-0.41,0.07t-0.31,0.2q-0.1,0.13-0.13,0.26t0.03,0.29q0.15,0.28 0.35,0.54q0.2,0.26 0.2,0.61q0,0.63-0.44,1.06T3.98,16.73T2.91,16.29T2.48,15.23q0-0.68 0.3-1.1t0.81-0.68T4.78,13.1T6.23,13q2.12,0 2.95,0.76Q10,14.53 10,16.45v3.68q0,0.48 0.11,0.7t0.39,0.23q0.3,0 0.49-0.45t0.24-1.4H11.5q-0.07,1.55-0.59,2.18T9.2,22q-1.08,0-1.69-0.34T6.73,20.65q-0.25,0.73-0.74,1.04T4.65,22Zm9.33,0q-0.5,0-0.81-0.41q-0.31-0.41-0.11-0.89l2.55-6.73q0.17-0.43 0.55-0.7T17,13q0.48,0 0.85,0.27t0.55,0.7l2.55,6.73q0.2,0.48-0.11,0.89T20.03,22q-0.3,0-0.55-0.18T19.1,21.35L18.6,19.9H15.4l-0.5,1.45q-0.1,0.27-0.35,0.46T13.98,22Zm-8.1-0.73q0.33,0 0.55-0.51t0.22-1.24V17.85Q6,17.85 5.7,18.24T5.4,19.5v0.27q0,0.9 0.1,1.2t0.38,0.3Zm10.18-3.13h1.93L17,15.3l-0.95,2.85Zm-0.93-7.13q-1.2,0-1.91-0.84T12.5,7.93q0-2.6 1.65-4.26T18.38,2q1.05,0 1.7,0.24t0.65,0.61q0,0.15-0.05,0.3T20.5,3.42Q20.38,3.6 20.19,3.67T19.8,3.7Q19.45,3.6 19,3.52T18.18,3.45q-1.77,0-2.85,1.2T14.25,7.82q0,0.55 0.2,1.15t0.9,0.6q0.27,0 0.54-0.13T16.35,9.1q0.43-0.45 0.79-1.5T17.8,5.05q0.05-0.33 0.26-0.46q0.21-0.14 0.59-0.14q0.45,0 0.69,0.24t0.14,0.59q-0.3,1.07-0.44,1.88T18.9,8.6q0,0.5 0.14,0.72t0.41,0.22t0.54-0.2T20.73,8.6q0.05-0.08 0.38-0.18q0.2,0 0.3,0.15T21.5,9q0,0.7-0.8,1.35T19.03,11q-0.65,0-1.11-0.35t-0.64-1q-0.38,0.65-0.93,1.01q-0.55,0.36-1.23,0.36ZM3,11V5.5Q3,4.05 4.03,3.02T6.5,2T8.98,3.02T10,5.5V11H8V9H5v2H3ZM5,7H8V5.5Q8,4.88 7.56,4.44T6.5,4T5.44,4.44T5,5.5V7Z"/></svg>
+          <span class="settings-row-name" style="font-family: var(--font-serif); font-weight: 700;">Charis SIL</span>
+          <button class="settings-switch" type="button" data-font="var(--font-serif)" aria-pressed="true" aria-label="Charis SIL"></button>
+        </div>
+
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6,22q-0.82,0-1.41-0.59T4,20V10Q4,9.17 4.59,8.59T6,8H9v2H6V20H18V10H15V8h3q0.82,0 1.41,0.59T20,10V20q0,0.82-0.59,1.41T18,22H6Zm5-6V4.82L9.4,6.43L8,5l4-4l4,4L14.6,6.43L13,4.82V16H11Z"/></svg>
+          <span class="settings-row-name">Compartir Presentación</span>
+          <button id="settingsShareBtn" class="font-btn" type="button" title="Compartir Presentación" aria-label="Compartir Presentación">
+            <svg class="back-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.6 15.6 5 12l3.6-3.6L10 9.8 7.8 12l2.2 2.2zm6.8 0L14 14.2l2.2-2.2L14 9.8l1.4-1.4L19 12zM5 21c-.5 0-1-.2-1.4-.6S3 19.5 3 19v-4h2v4h4v2zm10 0v-2h4v-4h2v4c0 .5-.2 1-.6 1.4s-.8.6-1.4.6zM3 9V5c0-.5.2-1 .6-1.4S4.5 3 5 3h4v2H5v4zm16 0V5h-4V3h4c.6 0 1 .2 1.4.6s.6.8.6 1.4v4z"/></svg>
+          <span class="settings-row-name">Contornos de diseño</span>
+          <button id="layoutOutlineBtn" class="settings-switch" type="button" title="Toggle layout outlines" aria-label="Toggle layout outlines" aria-pressed="false"></button>
+        </div>
+
+        <div class="settings-row">
+          <svg class="settings-row-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 17-5-5 5-5 1.4 1.4L3.8 12l3.6 3.6zm4.4 3.3-1.9-.6 5-16 1.9.6zM18 17l-1.4-1.4 3.6-3.6-3.6-3.6L18 7l5 5z"/></svg>
+          <span class="settings-row-name">Contenido editable</span>
+          <button id="contentEditableBtn" class="settings-switch" type="button" title="Toggle content editing" aria-label="Toggle content editing" aria-pressed="false"></button>
+        </div>
+
+      </div>
+
+      <div class="settings-footer">
+        <svg class="settings-footer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M17.8 12.3c0-1.6 1.3-3 2.9-3 .9 0 1.7.4 2.3 1.1C22.2 5 17.6 1 12.1 1S1.8 4.9 1 10.4c.6-.6 1.4-1 2.3-1 1.6 0 2.9 1.4 2.9 3 0 1.4-1.2 3-2.8 3-.9 0-1.8-.2-2.4-.9 1.1 5.1 5.6 8.7 10.8 8.7s9.8-3.6 10.9-8.7c-.5.6-1.3.9-2.1.9-1.5-.1-2.8-1.5-2.8-3.1m-3.6-.5c0 .9-.8 1.8-1.7 2 1 .2 1.7 1.1 1.7 2.1s-1.6 4-2.1 5.1h-.2c-.5-1.1-2.1-4.1-2.1-5.1s.7-1.9 1.7-2.1c-.9-.2-1.7-1.1-1.7-2V3.1l1-.2v8.7c0 .6.7 1.1 1.2 1.1.6 0 1.2-.5 1.2-1.1V2.9l1 .2z"/>
+        </svg>
+        <p><b>Vedana</b> no requiere suscripciones, <br/>cuenta de correo electrónico, <br/>ni datos personales.</p>
+      </div>
     </div>
 
   </div>

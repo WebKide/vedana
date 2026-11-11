@@ -328,6 +328,147 @@
 
 
   // ---------------------------------------------------------------
+  // Settings modal ("Ajustes de Presentación")
+  //
+  // Reader preferences are saved with dbSet and apply to every
+  // presentation. They are CSS custom properties on <html> that
+  // `#content p` already reads (see styles.css), so nothing re-renders.
+  // Each [data-font] row in the modal holds the CSS value written to
+  // --content-font: adding a font = adding a row in index.html.
+  // ---------------------------------------------------------------
+
+  var SHARE_BASE_URL = ''; // public site URL (used by the APK); empty = this page's origin + path
+  var DEFAULT_CONTENT_FONT = 'var(--font-serif)';
+
+  var settingsBtn     = document.getElementById('settingsBtn');
+  var settingsModal   = document.getElementById('settingsModal');
+  var settingsOverlay = document.getElementById('settingsOverlay');
+  var settingsClose   = document.getElementById('settingsClose');
+  var justifyBtn      = document.getElementById('settingsJustifyBtn');
+  var fontRowBtns     = settingsModal
+    ? Array.prototype.slice.call(settingsModal.querySelectorAll('[data-font]'))
+    : [];
+
+  var settingsLastFocus = null;
+  var toastEl = null;
+  var toastTimer = null;
+
+  function showToast(text, isError) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'toast';
+      toastEl.setAttribute('role', 'status');
+      document.body.appendChild(toastEl);
+    }
+
+    toastEl.textContent = text;
+    toastEl.classList.toggle('is-error', !!isError);
+    toastEl.classList.add('is-visible');
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove('is-visible');
+    }, 2400);
+  }
+
+  function applyContentFont(value) {
+    var known = fontRowBtns.some(function (b) {
+      return b.getAttribute('data-font') === value;
+    });
+    if (!known) value = DEFAULT_CONTENT_FONT;
+
+    document.documentElement.style.setProperty('--content-font', value);
+
+    fontRowBtns.forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-font') === value ? 'true' : 'false');
+    });
+
+    scheduleReveal(); // line heights changed
+  }
+
+  function applyJustify(on) {
+    document.documentElement.style.setProperty('--content-align', on ? 'justify' : 'left');
+    if (justifyBtn) justifyBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    scheduleReveal();
+  }
+
+  function shareCurrentLink() {
+    var slug = currentTemplateSlug || window.Router.getCurrentSlug();
+    if (!slug) return;
+
+    var link = (SHARE_BASE_URL || (location.origin + location.pathname)) + '#' + slug;
+
+    // APK: native share sheet (WhatsApp, Telegram, Messenger...).
+    if (window.AndroidBridge && typeof window.AndroidBridge.shareText === 'function') {
+      window.AndroidBridge.shareText(link);
+      return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(
+        function () { showToast('Enlace copiado al portapapeles'); },
+        function () { showToast('No se pudo copiar el enlace', true); }
+      );
+    } else {
+      showToast('No se pudo copiar el enlace', true);
+    }
+  }
+
+  function openSettings() {
+    if (!settingsModal) return;
+
+    settingsLastFocus = document.activeElement;
+
+    settingsModal.classList.add('is-open');
+    settingsModal.inert = false;
+    document.documentElement.classList.add('code-lightbox-active'); // reuses the page scroll lock
+
+    if (settingsClose) settingsClose.focus();
+  }
+
+  function closeSettings() {
+    if (!settingsModal) return;
+
+    settingsModal.classList.remove('is-open');
+    settingsModal.inert = true;
+    document.documentElement.classList.remove('code-lightbox-active');
+
+    if (settingsLastFocus && typeof settingsLastFocus.focus === 'function') {
+      settingsLastFocus.focus();
+    }
+    settingsLastFocus = null;
+  }
+
+  applyContentFont(dbGet('contentFont', DEFAULT_CONTENT_FONT));
+  applyJustify(dbGet('justify', false) === true);
+
+  if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
+  if (settingsOverlay) settingsOverlay.addEventListener('click', closeSettings);
+  if (settingsClose) settingsClose.addEventListener('click', closeSettings);
+
+  if (settingsModal) {
+    settingsModal.addEventListener('click', function (e) {
+
+      var fontBtn = e.target.closest('[data-font]');
+      if (fontBtn) {
+        var value = fontBtn.getAttribute('data-font');
+        applyContentFont(value);
+        dbSet('contentFont', value);
+        return;
+      }
+
+      if (e.target.closest('#settingsJustifyBtn')) {
+        var on = justifyBtn.getAttribute('aria-pressed') !== 'true';
+        applyJustify(on);
+        dbSet('justify', on);
+        return;
+      }
+
+      if (e.target.closest('#settingsShareBtn')) shareCurrentLink();
+    });
+  }
+
+  // ---------------------------------------------------------------
   // Template developer tools
   //
   // These are intentionally ephemeral.
@@ -578,6 +719,11 @@
   document.addEventListener('keydown', function (e) {
 
     if (e.key !== 'Escape') return;
+
+    if (settingsModal && settingsModal.classList.contains('is-open')) {
+      closeSettings();
+      return;
+    }
 
     if (openGlossTooltip) {
       closeGlossTooltip();
@@ -3801,6 +3947,7 @@
     closeMenu();
     closeGlossTooltip();
     if (codeLightbox && codeLightbox.classList.contains('is-open')) closeCodeLightbox();
+    if (settingsModal && settingsModal.classList.contains('is-open')) closeSettings();
     if (templateSearchModal && templateSearchModal.classList.contains('is-open')) closeTemplateSearch();
 
     // Flush the position of the presentation we're leaving while its content
