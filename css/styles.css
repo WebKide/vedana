@@ -2320,6 +2320,13 @@ html.code-lightbox-active body { overflow: hidden; }
   border-bottom: 1px solid var(--border);
 }
 
+/* .settings-row is display:grid, which would override the hidden attribute */
+.settings-row[hidden] { display: none; }
+
+/* Python wraps each COMMENTARY section in .commentary; the Ajustes toggle
+   adds .hide-commentary to #content (never stored) */
+#content.hide-commentary .commentary { display: none; }
+
 .settings-row-icon {
   width: 22px;
   height: 22px;
