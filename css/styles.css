@@ -2306,6 +2306,7 @@ html.code-lightbox-active body { overflow: hidden; }
 .settings-body {
   flex: 1 1 auto;
   min-height: 0;
+  max-height: calc(6 * 57px); /* 6 rows: each .settings-row is 57px (44px button + 12px padding + 1px border) */
   overflow-y: auto;
   scrollbar-width: thin;
 }

@@ -3,7 +3,7 @@
    Exception: change the number BEFORE the "." in SW_VERSION by hand to
    jump a major version; the generator only bumps the part after it. */
 
-const SW_VERSION = "jacaranda-dark-ui-v1.185";
+const SW_VERSION = "jacaranda-dark-ui-v1.191";
 
 // Versioned: replaced on every run. Holds the app shell + every template.
 const CORE_CACHE = "core-" + SW_VERSION;
@@ -64,6 +64,7 @@ const PRECACHE_URLS = [
   "templates/almanaque-vedico/vraja-parikrama-2026.html",
   "templates/blog-de-presentaciones/demonios-del-bhagavata.html",
   "templates/blog-de-presentaciones/mas-que-palabras.html",
+  "templates/blog-de-presentaciones/peso-de-una-instruccion.html",
   "templates/blog-de-presentaciones/vidvad-rudhi.html",
   "templates/datos-importantes/armonia.html",
   "templates/datos-importantes/envidia-matsarya.html",
@@ -71,13 +72,13 @@ const PRECACHE_URLS = [
   "templates/datos-importantes/notas-bhagavata.html",
   "templates/de-hindi-a-latam/cartas-de-kartika.html",
   "templates/de-hindi-a-latam/por-que-parikramas.html",
-  "templates/garga-samhita-eng/canto1-eng.html",
-  "templates/garga-samhita-eng/canto2-eng.html",
-  "templates/garga-samhita-eng/canto3-eng.html",
-  "templates/garga-samhita-eng/canto4-eng.html",
-  "templates/garga-samhita-eng/canto5-eng.html",
-  "templates/garga-samhita-eng/canto6-eng.html",
-  "templates/garga-samhita-eng/canto8-eng.html",
+  "templates/garga-samhita-eng/g-s-canto1-eng.html",
+  "templates/garga-samhita-eng/g-s-canto2-eng.html",
+  "templates/garga-samhita-eng/g-s-canto3-eng.html",
+  "templates/garga-samhita-eng/g-s-canto4-eng.html",
+  "templates/garga-samhita-eng/g-s-canto5-eng.html",
+  "templates/garga-samhita-eng/g-s-canto6-eng.html",
+  "templates/garga-samhita-eng/g-s-canto8-eng.html",
   "templates/gaudiya-acaryas/19-de-octubre-1994.html",
   "templates/gaudiya-acaryas/bhakti-pramoda-puri.html",
   "templates/gaudiya-acaryas/prabhupada-aparicion.html",

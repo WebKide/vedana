@@ -402,6 +402,15 @@
     scheduleReveal();
   }
 
+  var reduceMotionPref = false; // read by updateReveal()
+  var reduceMotionBtn = document.getElementById('settingsReduceMotionBtn');
+
+  function applyReduceMotion(on) {
+    reduceMotionPref = on;
+    if (reduceMotionBtn) reduceMotionBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    scheduleReveal(); // clears any slide offset already applied
+  }
+
   function shareCurrentLink() {
     var slug = currentTemplateSlug || window.Router.getCurrentSlug();
     if (!slug) return;
@@ -453,6 +462,7 @@
 
   applyContentFont(dbGet('contentFont', DEFAULT_CONTENT_FONT));
   applyJustify(dbGet('justify', false) === true);
+  applyReduceMotion(dbGet('reduceMotion', false) === true);
 
   if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
   if (settingsOverlay) settingsOverlay.addEventListener('click', closeSettings);
@@ -473,6 +483,13 @@
         var on = justifyBtn.getAttribute('aria-pressed') !== 'true';
         applyJustify(on);
         dbSet('justify', on);
+        return;
+      }
+
+      if (e.target.closest('#settingsReduceMotionBtn')) {
+        var calm = reduceMotionBtn.getAttribute('aria-pressed') !== 'true';
+        applyReduceMotion(calm);
+        dbSet('reduceMotion', calm);
         return;
       }
 
@@ -2733,7 +2750,7 @@
     var viewH = window.innerHeight;
     var contentW = contentEl.clientWidth;
     var compact = !!(revealCompact && revealCompact.matches);
-    var noSlide = compact || !!(statsReduceMotion && statsReduceMotion.matches);
+    var noSlide = compact || reduceMotionPref || !!(statsReduceMotion && statsReduceMotion.matches);
 
     var rows = [];
     var i;

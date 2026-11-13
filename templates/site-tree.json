@@ -1,5 +1,5 @@
 {
-  "new": "sarartha-canto-11",
+  "new": "peso-de-una-instruccion",
   "folders": [
     {
       "display": "Almanaque védico",
@@ -44,6 +44,12 @@
           "title": "Más que palabras — el corazón conceptual de las lenguas",
           "menu_label": "Más que palabras",
           "path": "blog-de-presentaciones/mas-que-palabras.html"
+        },
+        {
+          "slug": "peso-de-una-instruccion",
+          "title": "El Peso de Una Instrucción “upadeśagauravam”",
+          "menu_label": "Peso de una instrucción",
+          "path": "blog-de-presentaciones/peso-de-una-instruccion.html"
         },
         {
           "slug": "vidvad-rudhi",
@@ -103,46 +109,46 @@
       "display": "Garga saṁhitā (ENG)",
       "entries": [
         {
-          "slug": "canto1-eng",
-          "title": "Canto 1 — Goloka-khaṇḍa (ENG)",
-          "menu_label": "Canto 1 — Goloka-khaṇḍa",
-          "path": "garga-samhita-eng/canto1-eng.html"
+          "slug": "g-s-canto1-eng",
+          "title": "Garga-saṁhitā, Canto 1 — Goloka-khaṇḍa (ENG)",
+          "menu_label": "G S Canto1 Eng",
+          "path": "garga-samhita-eng/g-s-canto1-eng.html"
         },
         {
-          "slug": "canto2-eng",
-          "title": "Canto 2 — Vṛndāvana-khaṇḍa (ENG)",
-          "menu_label": "Canto2 Eng",
-          "path": "garga-samhita-eng/canto2-eng.html"
+          "slug": "g-s-canto2-eng",
+          "title": "Garga-saṁhitā, Canto 2 — Vṛndāvana-khaṇḍa (ENG)",
+          "menu_label": "G S Canto2 Eng",
+          "path": "garga-samhita-eng/g-s-canto2-eng.html"
         },
         {
-          "slug": "canto3-eng",
-          "title": "Canto 3 — Girirāja-khaṇḍa (ENG)",
-          "menu_label": "Canto3 Eng",
-          "path": "garga-samhita-eng/canto3-eng.html"
+          "slug": "g-s-canto3-eng",
+          "title": "Garga-saṁhitā, Canto 3 — Girirāja-khaṇḍa (ENG)",
+          "menu_label": "G S Canto3 Eng",
+          "path": "garga-samhita-eng/g-s-canto3-eng.html"
         },
         {
-          "slug": "canto4-eng",
-          "title": "Canto 4 — Mādhurya-khaṇḍa (ENG)",
-          "menu_label": "Canto4 Eng",
-          "path": "garga-samhita-eng/canto4-eng.html"
+          "slug": "g-s-canto4-eng",
+          "title": "Garga-saṁhitā, Canto 4 — Mādhurya-khaṇḍa (ENG)",
+          "menu_label": "G S Canto4 Eng",
+          "path": "garga-samhita-eng/g-s-canto4-eng.html"
         },
         {
-          "slug": "canto5-eng",
-          "title": "Canto 5 — Mathurā-khaṇḍa (ENG)",
-          "menu_label": "Canto 5 — Mathurā-khaṇḍa",
-          "path": "garga-samhita-eng/canto5-eng.html"
+          "slug": "g-s-canto5-eng",
+          "title": "Garga-saṁhitā, Canto 5 — Mathurā-khaṇḍa (ENG)",
+          "menu_label": "G S Canto5 Eng",
+          "path": "garga-samhita-eng/g-s-canto5-eng.html"
         },
         {
-          "slug": "canto6-eng",
-          "title": "Canto 6 — Dvārakā-khaṇḍa (ENG)",
-          "menu_label": "Canto 6 — Dvārakā-khaṇḍa",
-          "path": "garga-samhita-eng/canto6-eng.html"
+          "slug": "g-s-canto6-eng",
+          "title": "Garga-saṁhitā, Canto 6 — Dvārakā-khaṇḍa (ENG)",
+          "menu_label": "G S Canto6 Eng",
+          "path": "garga-samhita-eng/g-s-canto6-eng.html"
         },
         {
-          "slug": "canto8-eng",
-          "title": "Canto 8 — Balabhadra-khaṇḍa (ENG)",
-          "menu_label": "Canto8 Eng",
-          "path": "garga-samhita-eng/canto8-eng.html"
+          "slug": "g-s-canto8-eng",
+          "title": "Garga-saṁhitā, Canto 8 — Balabhadra-khaṇḍa (ENG)",
+          "menu_label": "G S Canto8 Eng",
+          "path": "garga-samhita-eng/g-s-canto8-eng.html"
         }
       ]
     },
